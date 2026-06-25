@@ -566,19 +566,15 @@ async function enrichItem(item) {
   if (yearMatch) item.anio = yearMatch[1];
 
   // ── Músico / Compositor ──
-  const musicaMatch = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i)
+ const musicaMatch = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i)
            || html.match(/M[uú]sica[^:]*:\s*<[^>]+>([^<]+)<\//i)
-           || html.match(/M[uú]sica[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
+           || html.match(/M[uú]sica[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
   if (musicaMatch) item.musica = musicaMatch[1].trim();
 
   // ── Letrista ──
-  const letraMatch = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i)
+   const letraMatch = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i)
            || html.match(/Letra[^:]*:\s*<[^>]+>([^<]+)<\//i)
-           || html.match(/Letra[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
+           || html.match(/Letra[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
   if (letraMatch) item.letra = letraMatch[1].trim();
 
   // ── Género (si venía vacío) ──
@@ -593,12 +589,8 @@ async function enrichItem(item) {
   // ═══════════════════════════════════════════════════════
 
   // ── Orquesta ── Busca "Orquesta XXXX" en el reproductor
-  const orqMatch = html.match(/Orquesta\s+([^<
-]+?)(?:<|
-|$)/i)
-            || html.match(/orquesta["'\s]*[:=]["'\s]*([^<
-"']{2,60}?)(?:<|
-|"|')/i);
+    const orqMatch = html.match(/Orquesta\s+([^<\n]+?)(?:<|\n|$)/i)
+  || html.match(/orquesta["'\s]*[:=]["'\s]*([^<\n"']{2,60}?)(?:<|\n|"|')/i);
   if (orqMatch) item.orquesta = orqMatch[1].trim();
 
   // ── Cantante / Instrumental ──
@@ -607,9 +599,7 @@ async function enrichItem(item) {
     item.cantante = 'Instrumental';
   } else {
     const cantMatch = html.match(/(?:Cantor|Cantante|Voz)[^<]*<a[^>]+>([^<]+)<\/a>/i)
-             || html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
+             || html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
     if (cantMatch) item.cantante = cantMatch[1].trim();
   }
 
