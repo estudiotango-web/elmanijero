@@ -785,16 +785,16 @@ async function startUpload() {
 
   // Validar config
   if (!config.proxyUrl || config.proxyUrl.includes('________________________________')) {
-    alert('Primero configurá la URL del Apps Script en el panel Config.');
+    alert(`Primero configurá la URL del Apps Script en el panel Config.`);
     return;
   }
 
   const itemsToUpload = [...selected].map(id => allData.find(x=>x.id===id)).filter(x=>x&&x.audioId&&x.status!=='uploaded');
   if (!itemsToUpload.length) {
-    alert('No hay temas seleccionados listos para subir. Asegurate de:
+    alert(`No hay temas seleccionados listos para subir. Asegurate de:
 1. Extraer temas del scraper
 2. Seleccionar los que tienen audio
-3. Que no estén ya subidos');
+3. Que no estén ya subidos`);
     return;
   }
 
