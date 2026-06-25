@@ -485,21 +485,39 @@ function makeItem(id, titulo, genero, url) {
     orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' };
 }
 
+// Extrae texto limpio de una etiqueta HTML — elimina todo el HTML interno
+function tagText(html, tag) {
+  var m = html.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)<\\/' + tag + '>', 'i'));
+  return m ? m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+}
+
+// Extrae el primer texto de un <a> dentro de un bloque que contiene 'label'
+function labeledLink(html, label) {
+  // Busca: <td ...>label</td><td ...><a ...>VALOR</a>
+  var re = new RegExp(label + '[\\s\\S]{0,200}?<a[^>]+>([^<]{2,80})<\/a>', 'i');
+  var m = html.match(re);
+  if (m) return m[1].trim();
+  // Fallback: label: VALOR (sin link)
+  var re2 = new RegExp(label + '[^:]*:\\s*<[^>]+>([^<]{2,80})<', 'i');
+  var m2 = html.match(re2);
+  return m2 ? m2[1].trim() : '';
+}
+
 async function enrichItem(item) {
   var html;
   try { html = await proxyGet(item.url); }
   catch(e) { return; }
   if (!html) return;
 
-  // Audio ID
+  // ── Audio ID ──
+  // TodoTango guarda el id en un objeto JS tipo: {oga:"https://.../ogg/1738.ogg",...}
+  // Tomamos solo el numero del path, no todo el string del objeto
   var audioPatterns = [
-    /sbits[^"'\s]*?\/(\d+)\.ogg/i,
+    /["']?oga["']?\s*:\s*["'][^"']*?\/ogg\/(\d+)\.ogg/i,
+    /sbits\.us[^"'\s]*?\/(\d+)\.ogg/i,
     /todotango\/ogg\/(\d+)/i,
-    /idsonido["'\s]*[:=]["'\s]*(\d+)/i,
-    /soundid["'\s]*[:=]["'\s]*(\d+)/i,
     /EscucharTema\s*\(\s*(\d+)/i,
     /PlayTema\s*\(\s*(\d+)/i,
-    /reproducir\s*\(\s*(\d+)/i,
     /["']idSonido["']\s*:\s*(\d+)/i
   ];
   for (var i = 0; i < audioPatterns.length; i++) {
@@ -507,50 +525,50 @@ async function enrichItem(item) {
     if (mm && mm[1]) { item.audioId = parseInt(mm[1], 10); break; }
   }
 
-  // Ano composicion
-  var ym = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
-  if (ym) item.anio = ym[1];
+  // ── Orquesta — buscar dentro de estructura de tabla de TodoTango ──
+  // La página tiene celdas tipo: <td class="...">Orquesta</td><td ...><a href="...">D'Arienzo</a>
+  var orqVal = labeledLink(html, 'Orquesta');
+  if (orqVal && orqVal.length < 60) item.orquesta = orqVal;
 
-  // Musica
-  var mm2 = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
-            html.match(/M[uú]sica[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
-  if (mm2) item.musica = mm2[1].trim();
-
-  // Letra
-  var lm = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
-           html.match(/Letra[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
-  if (lm) item.letra = lm[1].trim();
-
-  // Genero
-  if (!item.genero) {
-    var gm = html.match(/<h[1-4][^>]*>\s*(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s*</i);
-    if (gm) item.genero = gm[1].trim();
-  }
-
-  // Orquesta
-  var om = html.match(/Orquesta\s+([^<\n]+?)(?:<|\n|$)/i);
-  if (om) item.orquesta = om[1].trim();
-
-  // Cantante
+  // ── Cantante ──
   if (/instrumental/i.test(html)) {
     item.cantante = 'Instrumental';
   } else {
-    var cm = html.match(/(?:Cantor|Cantante|Voz)[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
-             html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
-    if (cm) item.cantante = cm[1].trim();
+    var cantVal = labeledLink(html, 'Cantor') ||
+                  labeledLink(html, 'Cantante') ||
+                  labeledLink(html, 'Voz');
+    if (cantVal && cantVal.length < 60) item.cantante = cantVal;
   }
 
-  // Duracion
-  var dm = html.match(/(\d{1,2})[':'](\d{2})/);
-  if (dm) item.duracion = dm[1] + "'" + dm[2] + '"';
+  // ── Compositor / Música ──
+  var musicaVal = labeledLink(html, 'M\\u00fasica') ||
+                  labeledLink(html, 'Musica') ||
+                  labeledLink(html, 'Música');
+  if (musicaVal && musicaVal.length < 80) item.musica = musicaVal;
 
-  // Ano grabacion
-  var gm2 = html.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-  if (gm2) item.anioGrabacion = gm2[3];
-  if (!item.anioGrabacion) {
-    var gm3 = html.match(/(?:Buenos Aires|grabado|recording)[^\d]*(\d{4})/i);
-    if (gm3) item.anioGrabacion = gm3[1];
+  // ── Letrista ──
+  var letraVal = labeledLink(html, 'Letra');
+  if (letraVal && letraVal.length < 80) item.letra = letraVal;
+
+  // ── Género — si no vino de la lista, buscarlo en el h1/h2 de la página ──
+  if (!item.genero) {
+    var gm = html.match(/<h[1-3][^>]*>[\s\S]*?(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)[\s\S]*?<\/h[1-3]>/i);
+    if (gm) item.genero = gm[1];
   }
+
+  // ── Año composición ──
+  // Buscar patrón "Tango 1929" o similar cercano al género
+  var anioCompMatch = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
+  if (anioCompMatch) item.anio = anioCompMatch[1];
+
+  // ── Año grabación — buscar fecha DD/MM/YYYY o YYYY cerca de "grabaci" ──
+  var anioGrabMatch = html.match(/grabaci[oó]n[^\d]{0,30}(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/i) ||
+                      html.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if (anioGrabMatch) item.anioGrabacion = anioGrabMatch[3];
+
+  // ── Duración — buscar M:SS o M'SS en el HTML ──
+  var durMatch = html.match(/(\d{1,2})[':](\d{2})(?:[""]|(?!\d))/);
+  if (durMatch) item.duracion = durMatch[1] + ':' + durMatch[2];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1019,10 +1037,22 @@ function addLog(type, msg) {
   log.scrollTop = log.scrollHeight;
 }
 
+// Limpia basura JSON que puede venir del scraper (ej: 'D\'Arienzo",oga:...')
+function cleanFieldLocal(val) {
+  if (!val) return '';
+  var s = String(val);
+  var cuts = [s.indexOf('",'), s.indexOf("',"), s.indexOf('oga:'), s.indexOf('mp3:'), s.indexOf('http'), s.indexOf('{')];
+  var min = 9999;
+  for (var i = 0; i < cuts.length; i++) { if (cuts[i] > 0 && cuts[i] < min) min = cuts[i]; }
+  if (min < 9999) s = s.substring(0, min);
+  return s.replace(/["']+$/, '').trim();
+}
+
 function generatePublicIdLocal(orquesta, titulo, anio) {
-  var o  = cleanStringLocal(orquesta || 'Desconocida').substring(0, 25);
-  var t  = cleanStringLocal(titulo   || 'Desconocido').substring(0, 35);
-  var a  = String(anio || '0000').replace(/\D/g, '');
+  var orqLimpia = cleanFieldLocal(orquesta || 'Desconocida');
+  var o  = cleanStringLocal(orqLimpia).substring(0, 25);
+  var t  = cleanStringLocal(titulo || 'Desconocido').substring(0, 35);
+  var a  = String(anio || '0000').replace(/\D/g, '').substring(0, 4);
   return (o + '_' + t + '_' + a).replace(/[^a-zA-Z0-9_\-.]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
 }
 
