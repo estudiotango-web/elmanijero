@@ -409,13 +409,14 @@ async function proxyGet(url) {
   return d.contents || '';
 }
 
-async function proxyPost(action, payload) {
-  var body = Object.assign({ action: action }, payload);
-  var r = await fetch(cfg.proxyUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+// Todo via GET — Apps Script POST dispara preflight OPTIONS que CORS bloquea.
+// GET simple no tiene preflight y Apps Script lo responde con CORS OK.
+async function proxyAction(action, payload) {
+  var url = cfg.proxyUrl + '?action=' + encodeURIComponent(action);
+  if (payload && Object.keys(payload).length) {
+    url += '&data=' + encodeURIComponent(JSON.stringify(payload));
+  }
+  var r = await fetch(url, { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
@@ -816,8 +817,14 @@ async function startUpload() {
         item.cloudinaryUrl = cdnUrl;
 
         // 3) Registrar en Sheets via proxy
-        var sheetResult = await proxyPost('writeToSheet', {
-          track: item, cloudinaryUrl: cdnUrl, publicId: publicId
+        // Solo mandamos los campos necesarios para no superar el limite de URL (~2000 chars)
+        var trackMin = {
+          id: item.id, titulo: item.titulo, orquesta: item.orquesta, musica: item.musica,
+          cantante: item.cantante, genero: item.genero, anio: item.anio,
+          anioGrabacion: item.anioGrabacion, duracion: item.duracion, audioId: item.audioId
+        };
+        var sheetResult = await proxyAction('write', {
+          track: trackMin, cloudinaryUrl: cdnUrl, publicId: publicId
         });
 
         if (sheetResult.error) throw new Error('Sheets: ' + sheetResult.error);
@@ -908,7 +915,7 @@ async function refreshSheetStatus() {
   if (!cfg.proxyUrl) return;
   try {
     document.getElementById('uploadStatus').textContent = 'Verificando Sheets...';
-    var result = await proxyPost('getExistingIds', {});
+    var result = await proxyAction('getIds', {});
     if (result.ids) {
       existingIds = new Set(result.ids);
       allData.forEach(function(item) {
