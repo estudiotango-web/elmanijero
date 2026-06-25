@@ -1,6 +1,7 @@
-/* El Manijero · panel.js v1.2
-   Audio propio desde Google Drive + YouTube como fallback
-   Visualizaciones de audio · Gauges segmentados · Knob touch corregido
+/* El Manijero · panel.js v1.3
+   Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
+   Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
+   Visualizaciones de audio · Gauges segmentados · Knob touch
    ─────────────────────────────────────────────────────────────────────── */
 
 const GAS_URL        = 'https://script.google.com/macros/s/AKfycbyZ6i5i5r1QHtbBWj20KLY8AhQgfaqBQBh3G8ClB2Fy2eWL04hQOuqEIrOxAeLS2pSv/exec';
@@ -15,8 +16,6 @@ const ABANDONO_VENTANA_MIN = 5;
 // ── Estado global ──────────────────────────────────────────────────────────
 let biblioteca    = [];
 let indexActual   = 0;
-let ytPlayer      = null;
-let ytReady       = false;
 let estadoPanel   = 'idle';
 let progressTimer = null;
 let cortinaTimer  = null;
@@ -28,11 +27,11 @@ let pistaPollingTimer = null;
 let energiaHistory = [];
 const MAX_ENERGIA_HISTORY = 60;
 
-// ── NUEVO: audio nativo ────────────────────────────────────────────────────
-let audioEl = null;   // elemento <audio> para archivos propios de Drive
+// ── Audio nativo (Cloudinary) ──────────────────────────────────────────────
+let audioEl = null;
 
 // ══════════════════════════════════════════════════════════════════════════
-// AUDIO PROPIO — Google Drive
+// AUDIO — Cloudinary
 // ══════════════════════════════════════════════════════════════════════════
 
 function reproducirConAudioEl(tema) {
@@ -47,7 +46,7 @@ function reproducirConAudioEl(tema) {
   audioEl.addEventListener('canplaythrough', function onReady() {
     audioEl.removeEventListener('canplaythrough', onReady);
     audioEl.play().catch(function(err) {
-      console.warn('Error al reproducir audio de Drive:', err);
+      console.warn('Error al reproducir audio de Cloudinary:', err);
       avanzarTema();
     });
     iniciarProgressAudio();
@@ -58,22 +57,29 @@ function reproducirConAudioEl(tema) {
   audioEl.addEventListener('ended', avanzarTema);
 
   audioEl.addEventListener('error', function() {
-    console.warn('Error cargando audio desde Drive — avanzando al siguiente');
+    console.warn('Error cargando audio desde Cloudinary — avanzando al siguiente:', tema.Titulo, tema.AudioURL);
     avanzarTema();
   });
 
-  // Progreso real (sobreescribe el timer de iniciarProgress)
+  // Progreso real via timeupdate
   audioEl.addEventListener('timeupdate', function() {
     if (!audioEl || !audioEl.duration) return;
-    var pct = (audioEl.currentTime / audioEl.duration) * 100;
-    var pf  = document.getElementById('progress-fill');
+    var pct  = (audioEl.currentTime / audioEl.duration) * 100;
+    var pf   = document.getElementById('progress-fill');
     if (pf) pf.style.width = pct.toFixed(1) + '%';
-    var cur = Math.floor(audioEl.currentTime);
+    var cur  = Math.floor(audioEl.currentTime);
     setEl('time-current',
       Math.floor(cur / 60) + ':' + (cur % 60).toString().padStart(2, '0'));
     var rest = Math.floor(audioEl.duration - audioEl.currentTime);
     setEl('m-tiempo',
       Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
+  });
+
+  // Mostrar duración real cuando el metadata esté disponible
+  audioEl.addEventListener('loadedmetadata', function() {
+    if (!audioEl) return;
+    var tot = Math.floor(audioEl.duration);
+    setEl('time-total', Math.floor(tot / 60) + ':' + (tot % 60).toString().padStart(2, '0'));
   });
 }
 
@@ -85,17 +91,12 @@ function detenerAudio() {
   }
 }
 
-// Iniciar barra de progreso para audio propio (sin timer — lo maneja timeupdate)
 function iniciarProgressAudio() {
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-  // La duración real la pone el evento timeupdate; solo reseteamos el display
   var pf = document.getElementById('progress-fill');
   if (pf) pf.style.width = '0%';
   setEl('time-current', '0:00');
-  if (audioEl && audioEl.duration) {
-    var tot = Math.floor(audioEl.duration);
-    setEl('time-total', Math.floor(tot / 60) + ':' + (tot % 60).toString().padStart(2, '0'));
-  }
+  setEl('time-total', '—');
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -221,7 +222,7 @@ function drawKnob(value) {
 }
 
 function getEventY(e) {
-  if (e.touches && e.touches.length > 0)             return e.touches[0].clientY;
+  if (e.touches && e.touches.length > 0)              return e.touches[0].clientY;
   if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
   return e.clientY;
 }
@@ -241,9 +242,7 @@ function knobOnMove(e) {
   var o = document.getElementById('vol-out');
   if (s) s.value       = Math.round(knobValue);
   if (o) o.textContent = Math.round(knobValue);
-  // Controla AMBOS reproductores
   if (audioEl) audioEl.volume = Math.round(knobValue) / 100;
-  if (ytPlayer && ytReady) ytPlayer.setVolume(Math.round(knobValue));
   e.preventDefault();
 }
 function knobOnEnd() { knobDragging = false; }
@@ -474,35 +473,6 @@ function drawEvolucionChart() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// YOUTUBE (fallback cuando no hay AudioURL)
-// ══════════════════════════════════════════════════════════════════════════
-
-function initYouTubePlayer(videoId) {
-  if (ytPlayer) { ytPlayer.loadVideoById(videoId); return; }
-  ytPlayer = new YT.Player('yt-player', {
-    height: '150', width: '200', videoId: videoId,
-    playerVars: { autoplay: 1, controls: 0, origin: location.origin, enablejsapi: 1 },
-    events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange, onError: onPlayerError }
-  });
-}
-
-function onPlayerReady() {
-  ytReady = true;
-  var tema = biblioteca[indexActual];
-  if (tema && estadoPanel === 'playing') { iniciarProgress(tema); startAudioSimulation(); activarRing(true); }
-}
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING && ytReady) {
-    var tema = biblioteca[indexActual];
-    if (tema && estadoPanel === 'playing') { iniciarProgress(tema); startAudioSimulation(); activarRing(true); }
-  }
-  if (event.data === YT.PlayerState.PAUSED) activarRing(false);
-  if (event.data === YT.PlayerState.ENDED)  avanzarTema();
-}
-function onPlayerError(event) { console.warn('YT error:', event.data); setTimeout(avanzarTema, 1500); }
-window.onYouTubeIframeAPIReady = function() { console.log('El Manijero: YouTube API lista'); };
-
-// ══════════════════════════════════════════════════════════════════════════
 // LÓGICA DE MILONGA
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -522,6 +492,17 @@ async function fetchBiblioteca() {
   try {
     var res  = await fetch(GAS_URL + '?action=getBiblioteca');
     var data = await res.json();
+
+    // Normalizar campos según el orden real de columnas:
+    // ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
+    // El GAS devuelve objetos con esas claves — solo nos aseguramos de que
+    // AudioURL esté presente y sea la URL de Cloudinary.
+    data = data.map(function(t) {
+      // Compatibilidad: si el GAS aún devuelve CloudinaryURL en vez de AudioURL
+      if (!t.AudioURL && t.CloudinaryURL) t.AudioURL = t.CloudinaryURL;
+      return t;
+    });
+
     if (esPrimera) {
       biblioteca = data;
       mostrarEstadoCarga(null);
@@ -529,15 +510,15 @@ async function fetchBiblioteca() {
       actualizarBotones();
       iniciarPolling();
     } else {
-      var temaActual    = biblioteca[indexActual];
-      var yaReprod      = biblioteca.slice(0, indexActual + 1);
-      var idsYa         = new Set(yaReprod.map(function(t){ return t.ID; }));
-      var colaNueva     = data.filter(function(t){ return !idsYa.has(t.ID); });
-      var longitudAntes = biblioteca.length;
-      biblioteca = yaReprod.concat(colaNueva);
-      var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
+      var temaActual = biblioteca[indexActual];
+      var yaReprod   = biblioteca.slice(0, indexActual + 1);
+      var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
+      var colaNueva  = data.filter(function(t){ return !idsYa.has(t.ID); });
+      var longAntes  = biblioteca.length;
+      biblioteca     = yaReprod.concat(colaNueva);
+      var nuevoIdx   = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
       if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
-      var diff = biblioteca.length - longitudAntes;
+      var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
         mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
         if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
@@ -561,9 +542,7 @@ function iniciarMilonga() {
 function pausarMilonga() {
   if (estadoPanel !== 'playing') return;
   estadoPanel = 'paused';
-  // Pausar audio propio o YouTube según cuál esté activo
   if (audioEl && !audioEl.paused) audioEl.pause();
-  if (ytPlayer && ytReady) ytPlayer.pauseVideo();
   detenerTimers(); stopAudioSimulation(); activarRing(false);
   actualizarBotones(); actualizarLiveBadge();
   setEl('ia-texto', 'Milonga en pausa.');
@@ -572,61 +551,67 @@ function pausarMilonga() {
 function reanudar() {
   estadoPanel = 'playing';
   if (audioEl && audioEl.paused) audioEl.play();
-  if (ytPlayer && ytReady) ytPlayer.playVideo();
   actualizarBotones(); actualizarLiveBadge();
   startAudioSimulation(); activarRing(true);
 }
 
 function stopMilonga() {
   estadoPanel = 'stopped';
-  detenerAudio();                           // detiene audio propio
-  if (ytPlayer && ytReady) ytPlayer.stopVideo();
+  detenerAudio();
   detenerTimers(); stopAudioSimulation(); activarRing(false);
   actualizarBotones(); actualizarLiveBadge(); resetProgressUI();
   setEl('now-name', '—'); setEl('now-orq', '—');
   setEl('ia-texto', 'Milonga detenida.'); renderCola([]);
 }
 
-// ── Reproducir tema — prioridad: Drive > YouTube > saltar ─────────────────
+// ── Reproducir tema ────────────────────────────────────────────────────────
 function reproducirTema(index) {
   if (index >= biblioteca.length) { finDeLaNoche(); return; }
-  var tema = biblioteca[index];
 
+  var tema = biblioteca[index];
   detenerTimers();
-  detenerAudio();                           // limpiar audio anterior si lo hay
+  detenerAudio();
   renderTemaActual(tema, index);
   renderCola(biblioteca.slice(index + 1, index + 6));
+  actualizarContadorTemas();
 
   if (esCortina(tema)) {
-    cortinaTimer = setTimeout(avanzarTema, CORTINA_DURACION_SEG * 1000);
-    startAudioSimulation();
-    activarRing(true);
+    // Las cortinas se reproducen igual que cualquier tema si tienen AudioURL,
+    // y si no tienen se corta automáticamente por timer.
+    if (tema.AudioURL) {
+      reproducirConAudioEl(tema);
+    } else {
+      startAudioSimulation();
+      activarRing(true);
+      cortinaTimer = setTimeout(avanzarTema, CORTINA_DURACION_SEG * 1000);
+    }
     return;
   }
 
   if (tema.AudioURL) {
-    // ✅ Audio propio desde Google Drive
     reproducirConAudioEl(tema);
-  } else if (tema.URL) {
-    // ⬇️ Fallback a YouTube
-    var videoId = extraerVideoId(tema.URL);
-    if (videoId) initYouTubePlayer(videoId);
-    else avanzarTema();
   } else {
-    // Sin fuente — saltar
-    console.warn('Tema sin AudioURL ni URL de YouTube:', tema.Titulo);
-    avanzarTema();
+    // Sin fuente de audio — saltar al siguiente
+    console.warn('Tema sin AudioURL — saltando:', tema.Titulo);
+    setTimeout(avanzarTema, 800);
   }
 }
 
+// ── avanzarTema — avanza sin importar el estado interno ───────────────────
+// (antes verificaba estadoPanel === 'playing' y bloqueaba el avance)
 function avanzarTema() {
-  if (estadoPanel !== 'playing') return;
+  // Solo saltamos si realmente estamos en reproducción o si es un avance
+  // automático por cortina/error; no avanzamos si el usuario detuvo todo.
+  if (estadoPanel === 'stopped' || estadoPanel === 'idle') return;
   indexActual++;
+  if (indexActual >= biblioteca.length) { finDeLaNoche(); return; }
   reproducirTema(indexActual);
 }
 
+// ── Detección de cortina ───────────────────────────────────────────────────
+// Acepta "Cortina" con cualquier capitalización y espacios extra
 function esCortina(t) {
-  return (t.Estilo || '').toLowerCase() === 'cortina';
+  return String(t.Estilo || '').trim().toLowerCase() === 'cortina';
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -639,55 +624,54 @@ function renderBibliotecaCargada() {
   setEl('now-year', '');
   actualizarContadorTemas();
   setEl('ia-texto', 'Sin datos de pista aún. Reproducirá en orden de biblioteca.');
+
   var chips = document.getElementById('now-chips');
   if (chips) chips.innerHTML = '<span class="chip ch-cortina">Sin datos aún</span>';
   renderCola(biblioteca.slice(0, 5));
 
-  // Mostrar cuántos tienen audio propio vs YouTube
-  var conDrive = biblioteca.filter(function(t){ return !!t.AudioURL; }).length;
+  var conAudio = biblioteca.filter(function(t){ return !!t.AudioURL; }).length;
   var badge    = document.getElementById('live-badge');
   if (badge) {
-    var info = conDrive > 0
-      ? biblioteca.length + ' temas · ' + conDrive + ' en Drive'
+    var info = conAudio > 0
+      ? biblioteca.length + ' temas · ' + conAudio + ' con audio'
       : biblioteca.length + ' temas listos';
     badge.innerHTML = '<div class="live-dot" style="background:#c9a84c;box-shadow:none"></div><span> ' + info + '</span>';
   }
   setEl('badge-temas', biblioteca.length + ' temas');
-  setEl('badge-sub',   conDrive > 0 ? conDrive + ' en Drive' : 'Biblioteca cargada');
+  setEl('badge-sub',   conAudio > 0 ? conAudio + ' con audio Cloudinary' : 'Biblioteca cargada');
 }
 
 function renderTemaActual(tema, index) {
-  setEl('now-name', tema.Titulo);
-  setEl('now-orq',  'Orquesta ' + tema.Orquesta);
-  setEl('now-year', tema.Anio + ' · ' + tema.Estilo);
-  setEl('m-tanda-sub', tema.Estilo + ' · ' + tema.Orquesta);
+  setEl('now-name', tema.Titulo  || '—');
+  setEl('now-orq',  tema.Orquesta ? 'Orquesta ' + tema.Orquesta : '—');
+  setEl('now-year', (tema.Anio   || '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
+  setEl('m-tanda-sub', (tema.Estilo || '') + ' · ' + (tema.Orquesta || ''));
   setEl('m-tanda',     (index + 1) + ' / ' + biblioteca.length);
   setEl('ia-footer-text', 'Tema ' + (index + 1) + ' de ' + biblioteca.length + ' · analizando…');
   setEl('badge-temas', (index + 1) + ' / ' + biblioteca.length);
-  setEl('badge-sub',   'Tanda 1 · ' + tema.Estilo);
-  setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : tema.Duracion);
+  setEl('badge-sub',   'Tanda 1 · ' + (tema.Estilo || ''));
+  setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '—'));
 
-  var fuente = tema.AudioURL ? '🎵 Drive' : '▶ YouTube';
-  var html = '<span class="chip ch-' + (tema.Estilo||'').toLowerCase() + '">' + tema.Estilo + '</span>';
+  var html = '<span class="chip ch-' + (tema.Estilo || '').toLowerCase() + '">' + (tema.Estilo || '?') + '</span>';
   if (tema.BPM > 0) html += '<span class="chip ch-gold">' + tema.BPM + ' BPM</span>';
-  html += '<span class="chip ch-gold">Energía ' + (tema.Energia||'').toLowerCase() + '</span>';
+  if (tema.Energia) html += '<span class="chip ch-gold">Energía ' + String(tema.Energia).toLowerCase() + '</span>';
   if (!esCortina(tema)) {
-    html += '<span class="chip ch-cortina">Calidad: ' + (tema.Calidad||'Buena') + '</span>';
-    html += '<span class="chip ch-cortina">' + (tema.Audio||'Mono') + '</span>';
-    html += '<span class="chip ch-green">' + fuente + '</span>';
+    if (tema.Calidad) html += '<span class="chip ch-cortina">Calidad: ' + tema.Calidad + '</span>';
+    html += '<span class="chip ch-green">☁ Cloudinary</span>';
   }
+
   var chips = document.getElementById('now-chips');
   if (chips) chips.innerHTML = html;
 
   setEl('ia-texto', esCortina(tema)
     ? 'Cortina activa · se cortará automáticamente a los ' + CORTINA_DURACION_SEG + 's.'
     : 'Analizando la pista… la IA se actualizará en breve.');
-  setEl('meta-lufs', '-16.1 LUFS'); setEl('meta-gain', '+2.8 dB');
-  setEl('meta-tp',   '-1.2 dB');    setEl('meta-rd',   '9.4');
+  setEl('meta-lufs', '—'); setEl('meta-gain', '—');
+  setEl('meta-tp',   '—'); setEl('meta-rd',   '—');
 }
 
 function actualizarContadorTemas() {
-  setEl('m-tanda', (estadoPanel === 'playing' ? (indexActual + 1) : '0') + ' / ' + biblioteca.length);
+  setEl('m-tanda', (estadoPanel === 'playing' || estadoPanel === 'paused' ? (indexActual + 1) : '0') + ' / ' + biblioteca.length);
 }
 
 function renderCola(temas) {
@@ -701,9 +685,9 @@ function renderCola(temas) {
     var esNext = i === 0, num = indexActual + i + 2;
     return '<div class="q-item ' + (esNext ? 'q-next' : '') + '">' +
       (esNext ? '<i class="ti ti-arrow-right q-arrow"></i>' : '<span class="q-num">' + num + '</span>') +
-      '<div class="q-info"><div class="q-track">' + t.Titulo + ' · ' + t.Orquesta + '</div>' +
-      '<div class="q-orq">' + (esCortina(t) ? '0:45' : t.Duracion) + ' · ' + (t.Energia||'').toLowerCase() + '</div></div>' +
-      '<span class="chip ch-' + (t.Estilo||'').toLowerCase() + '">' + t.Estilo + '</span></div>';
+      '<div class="q-info"><div class="q-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
+      '<div class="q-orq">' + (esCortina(t) ? '0:45' : (t.Duracion || '—')) + ' · ' + (t.Estilo || '') + '</div></div>' +
+      '<span class="chip ch-' + (t.Estilo || '').toLowerCase() + '">' + (t.Estilo || '') + '</span></div>';
   }).join('');
   renderProximaTanda(temas);
 }
@@ -716,9 +700,9 @@ function renderProximaTanda(temas) {
   var badges = ['Alta conexión', 'Energía ideal'];
   lista.innerHTML = sug.map(function(t, i) {
     return '<div class="prox-item">' +
-      '<div class="prox-info"><div class="prox-track">' + t.Titulo + ' · ' + t.Orquesta + '</div>' +
-      '<div class="prox-orq">' + t.Estilo + ' · ' + t.Anio + '</div></div>' +
-      '<span class="prox-badge">' + (badges[i]||'') + '</span></div>';
+      '<div class="prox-info"><div class="prox-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
+      '<div class="prox-orq">' + (t.Estilo || '') + ' · ' + (t.Anio || '') + '</div></div>' +
+      '<span class="prox-badge">' + (badges[i] || '') + '</span></div>';
   }).join('');
 }
 
@@ -750,7 +734,7 @@ function actualizarLiveBadge() {
     b.innerHTML = '<div class="live-dot" style="background:#555;animation:none"></div><span> Detenido</span>';
 }
 
-// ── Progreso para YouTube (timer-based) ───────────────────────────────────
+// ── Progreso timer (fallback si no hay metadata de duración) ──────────────
 function iniciarProgress(tema) {
   if (progressTimer) clearInterval(progressTimer);
   var durStr   = esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '0:00');
@@ -763,8 +747,8 @@ function iniciarProgress(tema) {
     var pct = Math.min((curSeg / totalSeg) * 100, 100);
     var pf  = document.getElementById('progress-fill');
     var tc  = document.getElementById('time-current');
-    if (pf) pf.style.width   = pct.toFixed(1) + '%';
-    if (tc) tc.textContent   = Math.floor(curSeg / 60) + ':' + (curSeg % 60).toString().padStart(2, '0');
+    if (pf) pf.style.width  = pct.toFixed(1) + '%';
+    if (tc) tc.textContent  = Math.floor(curSeg / 60) + ':' + (curSeg % 60).toString().padStart(2, '0');
     var rest = totalSeg - curSeg;
     setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
     if (curSeg >= totalSeg) clearInterval(progressTimer);
@@ -842,12 +826,6 @@ function marcarAbandono(activo, pct) {
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════════
 
-function extraerVideoId(url) {
-  if (!url) return null;
-  var m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
 function setEl(id, val) {
   var el = document.getElementById(id);
   if (el) el.textContent = val;
@@ -896,8 +874,7 @@ function initSliders() {
       if (id === 'vol') {
         knobValue = parseInt(s.value);
         drawKnob(knobValue);
-        if (audioEl) audioEl.volume = knobValue / 100;          // audio propio
-        if (ytPlayer && ytReady) ytPlayer.setVolume(knobValue); // YouTube fallback
+        if (audioEl) audioEl.volume = knobValue / 100;
       }
     });
   });
@@ -923,4 +900,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.2 · Drive audio + YouTube fallback · ¡A bailar!');
+console.log('El Manijero panel v1.3 · Cloudinary audio · ¡A bailar!');
