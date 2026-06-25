@@ -990,8 +990,8 @@ function updateStats(){
   $('sMil').textContent=mil; $('sPoe').textContent=poe; $('sAud').textContent=aud; $('sOtr').textContent=otr;
 }
 function addLog(type,msg){
-  const log=$('debugLog');
-  const el=document.createElement('div');
+  const log=$(`debugLog`);
+  const el=document.createElement(`div`);
   el.className=`log-line log-${type}`;
   el.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;
   log.appendChild(el); log.scrollTop=log.scrollHeight;
