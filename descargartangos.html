@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TodoTango → Cloudinary + Sheets</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0d0d; --surface: #161616; --surface2: #1f1f1f; --surface3: #252525;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.14);
+  --text: #ede9df; --text2: #7a7570; --text3: #484440;
+  --gold: #c9a84c; --red: #8b1a2a; --red-text: #e07070;
+  --green: #2a6640; --green-text: #7ec89a; --blue: #3a5a8a; --blue-text: #7aa0d0;
+  --radius: 6px; --radius-lg: 10px;
+}
+body { background:var(--bg); color:var(--text); font-family:'Georgia',serif; min-height:100vh; font-size:14px; }
+
+header { border-bottom:1px solid var(--border); padding:1.5rem 2rem; display:flex; align-items:center; gap:1.2rem; }
+.logo { width:44px;height:44px;border:1px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);flex-shrink:0; }
+header h1 { font-size:22px;font-weight:400;letter-spacing:.04em; }
+header p { font-size:11px;color:var(--text2);font-family:monospace;margin-top:2px; }
+
+main { max-width:1400px;margin:0 auto;padding:1.5rem 2rem; }
+
+.tabs { display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.5rem; }
+.tab { padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--gold);border-color:var(--gold); }
+.panel { display:none; }
+.panel.active { display:block; }
+
+.card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem; }
+.card-title { font-family:monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem; }
+
+.row { display:flex;gap:8px;flex-wrap:wrap;align-items:center; }
+
+select, input[type="text"], input[type="number"] {
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);
+  color:var(--text);font-size:12px;font-family:monospace;padding:7px 10px;height:34px;outline:none;transition:border-color .15s;
+}
+select:focus,input:focus { border-color:var(--gold); }
+#selLetra { width:80px; } #selGenero { width:170px; }
+
+button {
+  height:34px;padding:0 14px;border-radius:var(--radius);border:1px solid var(--border2);
+  background:transparent;color:var(--text);font-size:12px;font-family:monospace;
+  cursor:pointer;letter-spacing:.04em;transition:all .15s;white-space:nowrap;
+}
+button:hover { background:var(--surface2); }
+button:disabled { opacity:.3;cursor:not-allowed; }
+.btn-primary { background:var(--gold);color:#0d0d0d;border-color:var(--gold);font-weight:700; }
+.btn-primary:hover { opacity:.85;background:var(--gold); }
+.btn-danger { border-color:var(--red);color:var(--red-text); }
+.btn-danger:hover { background:rgba(139,26,42,.15); }
+.btn-success { border-color:var(--green);color:var(--green-text); }
+.btn-success:hover { background:rgba(42,102,64,.2); }
+.btn-blue { border-color:var(--blue);color:var(--blue-text); }
+.btn-blue:hover { background:rgba(58,90,138,.15); }
+
+.progress-bar { height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px; }
+.progress-fill { height:100%;background:var(--gold);transition:width .3s; }
+.status { font-family:monospace;font-size:11px;color:var(--text2);min-height:14px; }
+
+.log {
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 12px;font-family:monospace;font-size:11px;color:var(--text2);
+  max-height:200px;overflow-y:auto;margin-top:10px;
+}
+.log-line { padding:1px 0; }
+.log-ok { color:var(--green-text); } .log-err { color:var(--red-text); } .log-info { color:var(--gold); } .log-warn { color:#e0a040; } .log-blue { color:var(--blue-text); }
+
+.stats-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:1rem; }
+.stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px; }
+.stat .n { font-size:26px;color:var(--gold);line-height:1;margin-bottom:2px; }
+.stat .l { font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em; }
+
+.filter-row { display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:.75rem; }
+.filter-row input[type="text"] { flex:1;min-width:180px; }
+
+.table-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden; }
+.table-wrap { overflow-x:auto; }
+table { width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed; }
+thead th {
+  text-align:left;padding:9px 12px;font-family:monospace;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text3);background:var(--surface2);
+  border-bottom:1px solid var(--border);white-space:nowrap;font-weight:400;
+}
+tbody td { padding:8px 12px;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:var(--surface2); }
+tbody tr.processed td { opacity:.5; }
+tbody tr.processed td:first-child { opacity:1; }
+tbody tr.processing td { background:rgba(201,168,76,.08); }
+.col-sel { width:34px; } .col-titulo { width:22%; } .col-genero { width:8%; }
+.col-anio { width:6%; } .col-orquesta { width:14%; } .col-cantante { width:12%; }
+.col-duracion { width:7%; } .col-id { width:6%; } .col-oid { width:6%; }
+.col-status { width:8%;text-align:center; }
+td a { color:var(--gold);text-decoration:none; }
+td a:hover { text-decoration:underline; }
+.badge { display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;font-family:monospace;letter-spacing:.04em;text-transform:uppercase;font-weight:700; }
+.b-tango   { background:rgba(201,168,76,.12);color:var(--gold);     border:1px solid rgba(201,168,76,.25); }
+.b-vals    { background:rgba(94,160,150,.12);color:#5ea096;          border:1px solid rgba(94,160,150,.25); }
+.b-milonga { background:rgba(160,120,60,.15);color:#c4895a;          border:1px solid rgba(160,120,60,.25); }
+.b-poema   { background:rgba(130,90,180,.12);color:#b07fd6;          border:1px solid rgba(130,90,180,.25); }
+.b-audio   { background:rgba(42,102,64,.15); color:var(--green-text);border:1px solid rgba(42,102,64,.25); }
+.b-other   { background:var(--surface2);color:var(--text3);          border:1px solid var(--border); }
+
+.status-badge {
+  display:inline-block;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:4px;
+  text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+}
+.st-wait { background:rgba(255,255,255,.05);color:var(--text3); }
+.st-ready { background:rgba(58,90,138,.15);color:var(--blue-text); }
+.st-ok { background:rgba(42,102,64,.2);color:var(--green-text); }
+.st-err { background:rgba(139,26,42,.2);color:var(--red-text); }
+.st-skip { background:rgba(255,255,255,.05);color:var(--text3); }
+
+.pagination { display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--border);justify-content:center;font-family:monospace;font-size:11px;color:var(--text2); }
+.empty { text-align:center;padding:3rem 2rem;color:var(--text3);font-family:monospace;font-size:12px;line-height:2; }
+.empty-icon { font-size:36px;opacity:.25;margin-bottom:.5rem; }
+
+.export-row { display:flex;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap; }
+.export-row .info { font-family:monospace;font-size:11px;color:var(--text3);margin-right:auto; }
+input[type="checkbox"] { accent-color:var(--gold);width:14px;height:14px;cursor:pointer; }
+
+/* Config panel */
+.config-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px; }
+.config-item { display:flex;flex-direction:column;gap:4px; }
+.config-item label { font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em; }
+.config-item input { width:100%; }
+.config-item .hint { font-size:10px;color:var(--text2);font-family:monospace; }
+
+/* Upload progress panel */
+.upload-panel { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:1rem; }
+.upload-item { display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border); }
+.upload-item:last-child { border-bottom:none; }
+.upload-name { flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.upload-status { font-family:monospace;font-size:10px; }
+
+footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-family:monospace;border-top:1px solid var(--border);margin-top:2rem;letter-spacing:.04em; }
+
+@media (max-width:640px) {
+  main { padding:1rem; }
+  .col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid { display:none; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<header>
+  <div class="logo">☁</div>
+  <div>
+    <h1>TodoTango → Cloudinary + Sheets</h1>
+    <p>Scrapear · Subir audios · Registrar en Google Sheets</p>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('scrape')">① Scraper</div>
+    <div class="tab" onclick="switchTab('upload')">② Subir a Cloudinary</div>
+    <div class="tab" onclick="switchTab('config')">⚙ Config</div>
+  </div>
+
+  <!-- ══ PANEL SCRAPE ══ -->
+  <div class="panel active" id="panelScrape">
+    <div class="card">
+      <div class="card-title">Extracción de TodoTango</div>
+      <div class="row">
+        <select id="selLetra">
+          <option value="a">A</option><option value="b">B</option><option value="c">C</option>
+          <option value="d">D</option><option value="e">E</option><option value="f">F</option>
+          <option value="g">G</option><option value="h">H</option><option value="i">I</option>
+          <option value="j">J</option><option value="k">K</option><option value="l">L</option>
+          <option value="m">M</option><option value="n">N</option><option value="o">O</option>
+          <option value="p">P</option><option value="q">Q</option><option value="r">R</option>
+          <option value="s">S</option><option value="t">T</option><option value="u">U</option>
+          <option value="v">V</option><option value="w">W</option><option value="y">Y</option>
+          <option value="z">Z</option>
+          <option value="ALL">Todas A–Z</option>
+        </select>
+        <select id="selGenero">
+          <option value="0">Todos los géneros</option>
+          <option value="7">Tango</option><option value="8">Vals</option>
+          <option value="4">Milonga</option><option value="6">Poema</option>
+          <option value="2">Folklore</option><option value="1">Canción</option>
+          <option value="5">Otros ritmos</option><option value="3">Foxtrot</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:monospace;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" id="chkEnrich" checked> Extraer metadata completa
+        </label>
+        <button class="btn-primary" id="btnScrape" onclick="startScrape()">▶ Extraer</button>
+        <button class="btn-danger" id="btnStop" onclick="stopScrape()" style="display:none">■ Detener</button>
+      </div>
+      <div id="progressWrap" style="display:none;margin-top:10px">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="status" id="statusMsg"></div>
+      </div>
+      <div class="log" id="debugLog" style="display:none"></div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat"><div class="n" id="sTot">0</div><div class="l">Total</div></div>
+      <div class="stat"><div class="n" id="sTan">0</div><div class="l">Tangos</div></div>
+      <div class="stat"><div class="n" id="sVal">0</div><div class="l">Vals</div></div>
+      <div class="stat"><div class="n" id="sMil">0</div><div class="l">Milongas</div></div>
+      <div class="stat"><div class="n" id="sPoe">0</div><div class="l">Poemas</div></div>
+      <div class="stat"><div class="n" id="sAud">0</div><div class="l">Con audio</div></div>
+      <div class="stat"><div class="n" id="sOtr">0</div><div class="l">Otros</div></div>
+    </div>
+
+    <div class="filter-row" id="filterRow" style="display:none">
+      <input type="text" id="filterText" placeholder="Buscar título, orquesta, cantante…" oninput="renderTable()">
+      <select id="filterGenero" onchange="renderTable()">
+        <option value="">Todos los géneros</option>
+        <option value="tango">Tango</option><option value="vals">Vals</option>
+        <option value="milonga">Milonga</option><option value="poema">Poema</option>
+        <option value="canción">Canción</option><option value="folklore">Folklore</option>
+        <option value="foxtrot">Foxtrot</option>
+      </select>
+      <select id="filterAudio" onchange="renderTable()">
+        <option value="">Con y sin audio</option>
+        <option value="yes">Solo con audio</option>
+        <option value="no">Solo sin audio</option>
+      </select>
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="">Todos los estados</option>
+        <option value="ready">Listos para subir</option>
+        <option value="uploaded">Ya subidos</option>
+      </select>
+      <select id="sortBy" onchange="renderTable()">
+        <option value="titulo">Título A–Z</option>
+        <option value="anio">Año</option>
+        <option value="genero">Género</option>
+        <option value="id">ID tema</option>
+      </select>
+      <button onclick="selectAll(true)" style="font-size:11px">☑ Todo</button>
+      <button onclick="selectAll(false)" style="font-size:11px">☐ Ninguno</button>
+      <button onclick="selectAudioOnly()" style="font-size:11px;color:var(--green-text)">♪ Solo con audio</button>
+      <button onclick="selectReadyOnly()" style="font-size:11px;color:var(--blue-text)">☁ Listos</button>
+    </div>
+
+    <div class="table-card">
+      <div class="empty" id="emptyMsg">
+        <div class="empty-icon">♬</div>
+        Seleccioná una letra y hacé clic en <strong>Extraer</strong>
+      </div>
+      <div id="tableWrap" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-sel"><input type="checkbox" id="chkAll" onchange="toggleAll(this.checked)"></th>
+                <th class="col-titulo">Título</th>
+                <th class="col-genero">Género</th>
+                <th class="col-anio">Año</th>
+                <th class="col-orquesta">Orquesta</th>
+                <th class="col-cantante">Cantante</th>
+                <th class="col-duracion">Duración</th>
+                <th class="col-id">ID</th>
+                <th class="col-oid">OGG</th>
+                <th class="col-status">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination" style="display:none">
+          <button onclick="changePage(-1)">← Ant.</button>
+          <span id="pageInfo"></span>
+          <button onclick="changePage(1)">Sig. →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-row" id="exportRow" style="display:none">
+      <span class="info" id="exportInfo"></span>
+      <button onclick="exportCSV()">↓ CSV</button>
+      <button onclick="exportJSON()">↓ JSON</button>
+      <button class="btn-blue" onclick="switchToUpload()">→ Ir a Subir</button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL UPLOAD ══ -->
+  <div class="panel" id="panelUpload">
+    <div class="card">
+      <div class="card-title">Subir a Cloudinary + Google Sheets</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:1rem;">
+        Seleccioná temas en el panel <strong>Scraper</strong> y vení acá para subirlos.<br>
+        Cada tema se procesa: descarga OGG → sube a Cloudinary (con ID descriptivo) → registra en Sheets.
+      </p>
+      <div class="row" style="margin-bottom:10px">
+        <input type="number" id="uploadConcurrency" value="2" min="1" max="4" style="width:60px" title="Subidas simultáneas">
+        <label style="font-size:11px;font-family:monospace;color:var(--text2)">simultáneas</label>
+        <button class="btn-primary" id="btnUpload" onclick="startUpload()">▶ Subir seleccionados</button>
+        <button class="btn-danger" id="btnUploadStop" onclick="stopUpload()" style="display:none">■ Detener</button>
+        <button onclick="refreshSheetStatus()" style="font-size:11px">↻ Actualizar estado</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill" style="width:0%"></div></div>
+      <div class="status" id="uploadStatus"></div>
+    </div>
+
+    <div class="card" id="uploadQueueCard" style="display:none">
+      <div class="card-title">Cola de subida · <span id="uploadQueueInfo"></span></div>
+      <div class="upload-panel" id="uploadGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Resumen de Google Sheets</div>
+      <div class="stats-row" id="sheetStats" style="display:grid">
+        <div class="stat"><div class="n" id="ssTotal">?</div><div class="l">En Sheets</div></div>
+        <div class="stat"><div class="n" id="ssPending">?</div><div class="l">Pendientes</div></div>
+        <div class="stat"><div class="n" id="ssSelected">0</div><div class="l">Seleccionados</div></div>
+      </div>
+      <button onclick="refreshSheetStatus()" class="btn-blue" style="margin-top:8px">↻ Verificar estado en Sheets</button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL CONFIG ══ -->
+  <div class="panel" id="panelConfig">
+    <div class="card">
+      <div class="card-title">Configuración de conexión</div>
+      <div class="config-grid">
+        <div class="config-item">
+          <label>URL del Apps Script</label>
+          <input type="text" id="cfgAppsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          <span class="hint">Tu proxy de Apps Script (doGet/doPost)</span>
+        </div>
+        <div class="config-item">
+          <label>ID de Google Sheet</label>
+          <input type="text" id="cfgSheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+          <span class="hint">Entre /d/ y /edit en la URL de tu hoja</span>
+        </div>
+        <div class="config-item">
+          <label>Nombre de la pestaña</label>
+          <input type="text" id="cfgSheetName" placeholder="Hoja 1">
+          <span class="hint">Ej: Hoja 1, Base, Temas, etc.</span>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn-success" onclick="saveConfig()">💾 Guardar configuración</button>
+        <button onclick="testConnection()" style="margin-left:8px">🔗 Probar conexión</button>
+        <span id="configStatus" style="margin-left:12px;font-family:monospace;font-size:11px;color:var(--text2)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Instrucciones</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        <p><strong>1.</strong> Copiá el archivo <code>Code.gs</code> en tu proyecto de Google Apps Script.</p>
+        <p><strong>2.</strong> Completá <code>SHEET_ID</code> y <code>SHEET_NAME</code> en el archivo.</p>
+        <p><strong>3.</strong> Guardá y hacé <em>Deploy → New deployment → Web app</em>.</p>
+        <p><strong>4.</strong> Copiá la URL del deployment y pegala acá arriba.</p>
+        <p><strong>5.</strong> Hacé clic en <em>Probar conexión</em> para verificar.</p>
+        <p><strong>6.</strong> Andá al panel <em>Scraper</em>, extraé temas, seleccionalos y subilos.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>scraper no oficial · datos © todotango.com · uso personal</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+const DEFAULT_PROXY = 'https://script.google.com/macros/s/AKfycbxIsEvw08ZJK92yiBZhOf0U4MlwdbH7ujlzl73fSnrRuCDeUFbDFvUbhCmAVZ-kmte5/exec';
+const CDN_OGG = 'https://sbits.us-sea-1.linodeobjects.com/todotango/ogg/';
+const ALPHABET = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','y','z'];
+const GENRE_SLUG = { '0':'todos','1':'Canci%c3%b3n','2':'Folklore','3':'Foxtrot','4':'Milonga','5':'Otros%20ritmos','6':'Poema','7':'Tango','8':'Vals' };
+
+// ═══════════════════════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════════════════════
+let allData     = [];
+let selected    = new Set();
+let currentPage = 1;
+const PAGE_SIZE = 50;
+let running     = false;
+let abortFlag   = false;
+let uploadRunning = false;
+let uploadAbort = false;
+let existingIds = new Set(); // IDs ya en Sheets
+let config = {
+  proxyUrl: localStorage.getItem('tt_proxyUrl') || DEFAULT_PROXY,
+  sheetId: localStorage.getItem('tt_sheetId') || '',
+  sheetName: localStorage.getItem('tt_sheetName') || ''
+};
+
+// Cargar config en UI
+$('cfgAppsScriptUrl').value = config.proxyUrl;
+$('cfgSheetId').value = config.sheetId;
+$('cfgSheetName').value = config.sheetName;
+
+// ═══════════════════════════════════════════════════════════════
+//  PROXY
+// ═══════════════════════════════════════════════════════════════
+async function proxyFetch(url) {
+  const r = await fetch(config.proxyUrl + '?url=' + encodeURIComponent(url), { cache:'no-store' });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d.contents || '';
+}
+
+async function proxyPost(action, payload) {
+  const body = JSON.stringify({ action, ...payload });
+  const r = await fetch(config.proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return await r.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  $('panel' + name[0].toUpperCase() + name.slice(1)).classList.add('active');
+}
+function switchToUpload() {
+  document.querySelectorAll('.tab')[1].click();
+  updateSheetStats();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+function saveConfig() {
+  config.proxyUrl = $('cfgAppsScriptUrl').value.trim();
+  config.sheetId = $('cfgSheetId').value.trim();
+  config.sheetName = $('cfgSheetName').value.trim();
+  localStorage.setItem('tt_proxyUrl', config.proxyUrl);
+  localStorage.setItem('tt_sheetId', config.sheetId);
+  localStorage.setItem('tt_sheetName', config.sheetName);
+  $('configStatus').textContent = '✓ Guardado';
+  setTimeout(() => $('configStatus').textContent = '', 2000);
+}
+
+async function testConnection() {
+  $('configStatus').textContent = 'Probando…';
+  try {
+    const r = await fetch(config.proxyUrl + '?action=status');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      $('configStatus').textContent = `✓ Conectado (v${d.version})`;
+      if (d.sheetConnected) {
+        $('configStatus').textContent += ' · Sheets OK';
+      } else {
+        $('configStatus').textContent += ' · Sheets NO configurado';
+      }
+    } else {
+      $('configStatus').textContent = '✗ Error: ' + (d.error || 'desconocido');
+    }
+  } catch(e) {
+    $('configStatus').textContent = '✗ Error: ' + e.message;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FETCH LISTA DE TEMAS
+// ═══════════════════════════════════════════════════════════════
+async function fetchLetter(letter, generoId) {
+  const genre = GENRE_SLUG[generoId] || 'todos';
+  const url = `https://www.todotango.com/musica/obras/letras/${letter}/0/${genre}`;
+  addLog('info', `Fetching: ${url}`);
+
+  let html;
+  try { html = await proxyFetch(url); }
+  catch(e) { addLog('err', `Proxy error: ${e.message}`); return []; }
+  if (!html) { addLog('err', 'Respuesta vacía'); return []; }
+  addLog('ok', `HTML recibido: ${html.length} chars`);
+
+  const items = [];
+  const seen = new Set();
+
+  // Patrón 1: href con title="Titulo (Género)"
+  const re1 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*title="([^"(]+)\(([^)]+)\)"/g;
+  let m;
+  while ((m = re1.exec(html)) !== null) {
+    const id = parseInt(m[2]);
+    if (!seen.has(id)) {
+      seen.add(id);
+      items.push({ id, titulo:m[3].trim(), genero:m[4].trim(), url:m[1], musica:'', letra:'', anio:'', audioId:null, orquesta:'', cantante:'', duracion:'', anioGrabacion:'', status:'wait' });
+    }
+  }
+
+  // Patrón 2: link seguido de (Género)
+  if (!items.length) {
+    const re2 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*>([^<]+)<\/a>[^(]*\(([^)]+)\)/g;
+    while ((m = re2.exec(html)) !== null) {
+      const id = parseInt(m[2]);
+      if (!seen.has(id)) {
+        seen.add(id);
+        items.push({ id, titulo:m[3].trim(), genero:m[4].trim(), url:m[1], musica:'', letra:'', anio:'', audioId:null, orquesta:'', cantante:'', duracion:'', anioGrabacion:'', status:'wait' });
+      }
+    }
+  }
+
+  // Patrón 3: solo href
+  if (!items.length) {
+    const re3 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/([^"\/]+)\/)"/g;
+    while ((m = re3.exec(html)) !== null) {
+      const id = parseInt(m[2]);
+      if (!seen.has(id)) {
+        seen.add(id);
+        const titulo = decodeURIComponent(m[3].replace(/-/g,' ')).replace(/\w/g,c=>c.toUpperCase());
+        items.push({ id, titulo, genero:'', url:m[1], musica:'', letra:'', anio:'', audioId:null, orquesta:'', cantante:'', duracion:'', anioGrabacion:'', status:'wait' });
+      }
+    }
+  }
+
+  addLog(items.length ? 'ok' : 'warn', `Temas encontrados: ${items.length}`);
+  if (!items.length) addLog('warn', 'HTML snippet: ' + html.slice(0,300).replace(/\s+/g,' '));
+  return items;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ENRIQUECIMIENTO COMPLETO (página individual)
+// ═══════════════════════════════════════════════════════════════
+async function enrichItem(item) {
+  let html;
+  try { html = await proxyFetch(item.url); }
+  catch(e) { return; }
+  if (!html) return;
+
+  // ── ID de audio OGG ──
+  const audioPatterns = [
+    /sbits[^"'\s]*?\/(\d+)\.ogg/i,
+    /todotango\/ogg\/(\d+)/i,
+    /idsonido["'\s]*[:=]["'\s]*(\d+)/i,
+    /soundid["'\s]*[:=]["'\s]*(\d+)/i,
+    /audioid["'\s]*[:=]["'\s]*(\d+)/i,
+    /data-id=["'](\d+)["'][^>]*(?:ogg|audio|sound|player)/i,
+    /(?:ogg|audio|sound|player)[^>]*data-id=["'](\d+)["']/i,
+    /EscucharTema\s*\(\s*(\d+)/i,
+    /PlayTema\s*\(\s*(\d+)/i,
+    /ReproducirTema\s*\(\s*(\d+)/i,
+    /reproducir\s*\(\s*(\d+)/i,
+    /playAudio\s*\(\s*(\d+)/i,
+    /playerInit\s*\(\s*(\d+)/i,
+    /<input[^>]*(?:name|id)=["'][^"']*(?:sonido|audio|sound|ogg|idS)[^"']*["'][^>]*value=["'](\d+)["']/i,
+    /<input[^>]*value=["'](\d+)["'][^>]*(?:name|id)=["'][^"']*(?:sonido|audio|sound|ogg|idS)[^"']*["']/i,
+    /["']idSonido["']\s*:\s*(\d+)/i,
+    /["']audioFile["']\s*:\s*["'][^"']*?(\d+)\.ogg["']/i,
+  ];
+
+  for (const pat of audioPatterns) {
+    const mm = html.match(pat);
+    if (mm && mm[1]) {
+      item.audioId = parseInt(mm[1]);
+      break;
+    }
+  }
+
+  // ── Año del tango (composición) ──
+  // "Tango 1921" o "Vals 1935"
+  const yearMatch = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
+  if (yearMatch) item.anio = yearMatch[1];
+
+  // ── Músico / Compositor ──
+  const musicaMatch = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i)
+           || html.match(/M[uú]sica[^:]*:\s*<[^>]+>([^<]+)<\//i)
+           || html.match(/M[uú]sica[^:]*:\s*([^<
+]{2,60}?)(?:<|
+)/i);
+  if (musicaMatch) item.musica = musicaMatch[1].trim();
+
+  // ── Letrista ──
+  const letraMatch = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i)
+           || html.match(/Letra[^:]*:\s*<[^>]+>([^<]+)<\//i)
+           || html.match(/Letra[^:]*:\s*([^<
+]{2,60}?)(?:<|
+)/i);
+  if (letraMatch) item.letra = letraMatch[1].trim();
+
+  // ── Género (si venía vacío) ──
+  if (!item.genero) {
+    const gm = html.match(/class="[^"]*genero[^"]*"[^>]*>([^<]+)/i)
+            || html.match(/<h[1-4][^>]*>\s*(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s*</i);
+    if (gm) item.genero = gm[1].trim();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  NUEVO: Orquesta, Cantante, Duración, Año grabación
+  // ═══════════════════════════════════════════════════════
+
+  // ── Orquesta ── Busca "Orquesta XXXX" en el reproductor
+  const orqMatch = html.match(/Orquesta\s+([^<
+]+?)(?:<|
+|$)/i)
+            || html.match(/orquesta["'\s]*[:=]["'\s]*([^<
+"']{2,60}?)(?:<|
+|"|')/i);
+  if (orqMatch) item.orquesta = orqMatch[1].trim();
+
+  // ── Cantante / Instrumental ──
+  // Busca "Instrumental" o nombre de cantante
+  if (html.match(/instrumental/i)) {
+    item.cantante = 'Instrumental';
+  } else {
+    const cantMatch = html.match(/(?:Cantor|Cantante|Voz)[^<]*<a[^>]+>([^<]+)<\/a>/i)
+             || html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<
+]{2,60}?)(?:<|
+)/i);
+    if (cantMatch) item.cantante = cantMatch[1].trim();
+  }
+
+  // ── Duración ── Formato 02'14" o 02:13
+  const durMatch = html.match(/(\d{1,2})['\:](\d{2})["']?/);
+  if (durMatch) item.duracion = durMatch[1] + "'" + durMatch[2] + '"';
+
+  // ── Año de grabación ── Busca fecha tipo "28-7-1941"
+  const grabMatch = html.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (grabMatch) item.anioGrabacion = grabMatch[3];
+
+  // También buscar "Buenos Aires 1941" o similar
+  if (!item.anioGrabacion) {
+    const grabMatch2 = html.match(/(?:Buenos Aires|BA|grabado|recording)[^\d]*(\d{4})/i);
+    if (grabMatch2) item.anioGrabacion = grabMatch2[1];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ORCHESTRATION SCRAPE
+// ═══════════════════════════════════════════════════════════════
+async function startScrape() {
+  if (running) return;
+  running = true; abortFlag = false;
+  allData = []; selected.clear(); currentPage = 1;
+
+  $('btnScrape').disabled = true;
+  $('btnStop').style.display = '';
+  $('progressWrap').style.display = 'block';
+  $('debugLog').style.display = '';
+  $('statsRow').style.display = 'none';
+  $('filterRow').style.display = 'none';
+  $('exportRow').style.display = 'none';
+  $('tableWrap').style.display = 'none';
+  $('emptyMsg').style.display = '';
+  $('emptyMsg').innerHTML = '<div class="empty-icon">♩</div>Extrayendo…';
+  setProgress(0);
+
+  const letraVal = $('selLetra').value;
+  const generoId = $('selGenero').value;
+  const letters = letraVal === 'ALL' ? ALPHABET : [letraVal];
+
+  for (let li = 0; li < letters.length; li++) {
+    if (abortFlag) break;
+    setStatus(`Letra "${letters[li].toUpperCase()}" (${li+1}/${letters.length})`);
+    const items = await fetchLetter(letters[li], generoId);
+    allData.push(...items);
+    if (allData.length) showResults();
+    renderTable(); updateStats();
+    setProgress(Math.round((li+1)/letters.length * 55));
+    if (letters.length > 1) await sleep(600);
+  }
+
+  showResults(); renderTable(); updateStats();
+
+  // Enriquecimiento completo
+  if ($('chkEnrich').checked && allData.length) {
+    setStatus(`${allData.length} temas. Extrayendo metadata completa (orquesta, cantante, duración, año grabación)…`);
+    for (let i = 0; i < allData.length; i++) {
+      if (abortFlag) break;
+      await enrichItem(allData[i]);
+      setProgress(55 + Math.round((i+1)/allData.length * 43));
+      if (i % 3 === 0) { renderTable(); updateStats(); }
+      await sleep(350);
+    }
+  }
+
+  // Verificar cuáles ya están en Sheets
+  await refreshSheetStatus();
+
+  renderTable(); updateStats();
+  setProgress(100);
+  const conAudio = allData.filter(x => x.audioId).length;
+  const conOrquesta = allData.filter(x => x.orquesta).length;
+  setStatus(`✓ ${allData.length} temas — ${conAudio} con audio — ${conOrquesta} con orquesta detectada.`);
+  $('btnScrape').disabled = false;
+  $('btnStop').style.display = 'none';
+  running = false;
+}
+
+function stopScrape() {
+  abortFlag = true;
+  setStatus('Deteniendo…');
+  $('btnStop').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TABLA
+// ═══════════════════════════════════════════════════════════════
+function getFiltered() {
+  const txt = ($('filterText').value||'').toLowerCase();
+  const gen = ($('filterGenero').value||'').toLowerCase();
+  const audio = $('filterAudio').value;
+  const statusFilter = $('filterStatus').value;
+  const sort = $('sortBy').value;
+
+  let data = allData.filter(x => {
+    const mt = !txt || x.titulo.toLowerCase().includes(txt) || (x.orquesta||'').toLowerCase().includes(txt) || (x.cantante||'').toLowerCase().includes(txt) || (x.musica||'').toLowerCase().includes(txt);
+    const mg = !gen || (x.genero||'').toLowerCase().includes(gen);
+    const ma = !audio || (audio==='yes' ? x.audioId : !x.audioId);
+    const ms = !statusFilter || 
+      (statusFilter==='ready' ? (x.audioId && x.status !== 'uploaded') : 
+       statusFilter==='uploaded' ? x.status === 'uploaded' : true);
+    return mt && mg && ma && ms;
+  });
+
+  data.sort((a,b) => {
+    if (sort==='titulo') return a.titulo.localeCompare(b.titulo,'es');
+    if (sort==='anio') return (parseInt(a.anio)||9999)-(parseInt(b.anio)||9999);
+    if (sort==='genero') return (a.genero||'').localeCompare(b.genero||'','es');
+    if (sort==='id') return a.id-b.id;
+    return 0;
+  });
+  return data;
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  if (currentPage > pages) currentPage = 1;
+  const slice = filtered.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+  $('tbody').innerHTML = slice.map(x => {
+    const hasAudio = x.audioId != null;
+    const isUploaded = x.status === 'uploaded';
+    const isProcessing = x.status === 'processing';
+    const rowClass = isUploaded ? 'processed' : isProcessing ? 'processing' : '';
+
+    let statusBadge = '';
+    if (isUploaded) {
+      statusBadge = '<span class="status-badge st-ok">✓ Subido</span>';
+    } else if (hasAudio) {
+      statusBadge = '<span class="status-badge st-ready">Listo</span>';
+    } else {
+      statusBadge = '<span class="status-badge st-wait">Sin audio</span>';
+    }
+
+    return `<tr class="${rowClass}">
+      <td class="col-sel"><input type="checkbox" data-id="${x.id}" ${selected.has(x.id)?'checked':''} onchange="toggleSel(${x.id},this.checked)" ${isUploaded?'disabled':''}></td>
+      <td class="col-titulo" title="${esc(x.titulo)}"><a href="${x.url}" target="_blank">${esc(x.titulo)}</a></td>
+      <td class="col-genero"><span class="badge ${bc(x.genero)}">${esc(x.genero||'—')}</span></td>
+      <td class="col-anio">${x.anio||'—'}</td>
+      <td class="col-orquesta" title="${esc(x.orquesta)}">${esc(x.orquesta||x.musica||'—')}</td>
+      <td class="col-cantante" title="${esc(x.cantante)}">${esc(x.cantante||'—')}</td>
+      <td class="col-duracion">${x.duracion||'—'}</td>
+      <td class="col-id" style="color:var(--text3)">${x.id}</td>
+      <td class="col-oid" style="color:${x.audioId?'var(--green-text)':'var(--text3)'}">${x.audioId||'—'}</td>
+      <td class="col-status">${statusBadge}</td>
+    </tr>`;
+  }).join('');
+
+  $('pageInfo').textContent = `Pág ${currentPage}/${pages} · ${total} resultados`;
+  $('pagination').style.display = total > PAGE_SIZE ? 'flex' : 'none';
+  $('exportInfo').textContent = `${selected.size} sel · ${total} filtrados · ${allData.length} total`;
+  $('chkAll').indeterminate = selected.size > 0 && selected.size < allData.length;
+  $('chkAll').checked = selected.size > 0 && selected.size === allData.length;
+
+  // Actualizar stats de upload
+  updateSheetStats();
+}
+
+function toggleSel(id,on) { on ? selected.add(id) : selected.delete(id); renderTable(); }
+function toggleAll(on) { getFiltered().forEach(x => on ? selected.add(x.id) : selected.delete(x.id)); renderTable(); }
+function selectAll(on) { allData.forEach(x => on ? selected.add(x.id) : selected.delete(x.id)); renderTable(); }
+function selectAudioOnly() { allData.forEach(x => x.audioId ? selected.add(x.id) : selected.delete(x.id)); renderTable(); }
+function selectReadyOnly() { 
+  allData.forEach(x => (x.audioId && x.status !== 'uploaded') ? selected.add(x.id) : selected.delete(x.id)); 
+  renderTable(); 
+}
+
+function changePage(dir) {
+  const pages = Math.ceil(getFiltered().length/PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(pages, currentPage+dir));
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UPLOAD A CLOUDINARY + SHEETS
+// ═══════════════════════════════════════════════════════════════
+async function startUpload() {
+  if (uploadRunning) return;
+
+  // Validar config
+  if (!config.proxyUrl || config.proxyUrl.includes('________________________________')) {
+    alert('Primero configurá la URL del Apps Script en el panel Config.');
+    return;
+  }
+
+  const itemsToUpload = [...selected].map(id => allData.find(x=>x.id===id)).filter(x=>x&&x.audioId&&x.status!=='uploaded');
+  if (!itemsToUpload.length) {
+    alert('No hay temas seleccionados listos para subir. Asegurate de:
+1. Extraer temas del scraper
+2. Seleccionar los que tienen audio
+3. Que no estén ya subidos');
+    return;
+  }
+
+  uploadRunning = true; uploadAbort = false;
+  $('btnUpload').disabled = true;
+  $('btnUploadStop').style.display = '';
+  $('uploadQueueCard').style.display = '';
+
+  const concurrency = Math.max(1, Math.min(4, parseInt($('uploadConcurrency').value)||2));
+  let done = 0;
+  const total = itemsToUpload.length;
+
+  // Armar cola visual
+  $('uploadGrid').innerHTML = itemsToUpload.map((x,i) => `
+    <div class="upload-item" id="uitem-${i}">
+      <span class="upload-name">${esc(x.titulo)} — ${esc(x.orquesta||x.musica||'?')}</span>
+      <span class="upload-status" id="ustatus-${i}">En cola</span>
+    </div>
+  `).join('');
+
+  $('uploadStatus').textContent = `Subiendo ${total} temas (${concurrency} simultáneos)…`;
+
+  let qIdx = 0;
+  async function worker() {
+    while (qIdx < itemsToUpload.length && !uploadAbort) {
+      const idx = qIdx++;
+      const item = itemsToUpload[idx];
+
+      // Marcar como procesando
+      item.status = 'processing';
+      $(`ustatus-${idx}`).textContent = 'Subiendo…';
+      $(`ustatus-${idx}`).style.color = 'var(--gold)';
+      renderTable();
+
+      try {
+        const result = await proxyPost('processTrack', { track: item });
+
+        if (result.success) {
+          item.status = 'uploaded';
+          item.cloudinaryUrl = result.cloudinaryUrl;
+          item.publicId = result.publicId;
+          $(`ustatus-${idx}`).textContent = '✓ OK';
+          $(`ustatus-${idx}`).style.color = 'var(--green-text)';
+          addLog('ok', `Subido: ${item.titulo} → ${result.publicId}`);
+        } else {
+          item.status = 'wait';
+          $(`ustatus-${idx}`).textContent = '✗ ' + (result.error || 'Error');
+          $(`ustatus-${idx}`).style.color = 'var(--red-text)';
+          addLog('err', `Error subiendo ${item.titulo}: ${result.error}`);
+        }
+
+      } catch(e) {
+        item.status = 'wait';
+        $(`ustatus-${idx}`).textContent = '✗ ' + e.message;
+        $(`ustatus-${idx}`).style.color = 'var(--red-text)';
+        addLog('err', `Error de red ${item.titulo}: ${e.message}`);
+      }
+
+      done++;
+      $('uploadProgressFill').style.width = Math.round(done/total*100)+'%';
+      $('uploadQueueInfo').textContent = `${done}/${total}`;
+      $('uploadStatus').textContent = `${done}/${total} procesados`;
+      renderTable();
+      await sleep(200);
+    }
+  }
+
+  const pool = [];
+  for (let i=0;i<concurrency;i++) pool.push(worker());
+  await Promise.all(pool);
+
+  const ok = itemsToUpload.filter(x=>x.status==='uploaded').length;
+  const err = total - ok;
+  $('uploadStatus').textContent = `✓ Listo: ${ok} subidos${err?', '+err+' errores':''}`;
+  $('btnUpload').disabled = false;
+  $('btnUploadStop').style.display = 'none';
+  uploadRunning = false;
+
+  // Actualizar estado en Sheets
+  await refreshSheetStatus();
+}
+
+function stopUpload() {
+  uploadAbort = true;
+  $('uploadStatus').textContent = 'Deteniendo…';
+  $('btnUploadStop').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VERIFICAR ESTADO EN SHEETS
+// ═══════════════════════════════════════════════════════════════
+async function refreshSheetStatus() {
+  if (!config.proxyUrl || config.proxyUrl.includes('________________________________')) return;
+
+  try {
+    $('uploadStatus').textContent = 'Verificando estado en Sheets…';
+    const result = await proxyPost('getExistingIds', {});
+
+    if (result.ids) {
+      existingIds = new Set(result.ids);
+
+      // Marcar temas ya subidos
+      allData.forEach(item => {
+        const publicId = generatePublicIdLocal(item.orquesta||item.musica, item.titulo, item.anioGrabacion||item.anio);
+        if (existingIds.has(publicId)) {
+          item.status = 'uploaded';
+        }
+      });
+
+      renderTable();
+      updateSheetStats();
+      $('uploadStatus').textContent = `${existingIds.size} temas ya en Sheets`;
+    }
+  } catch(e) {
+    $('uploadStatus').textContent = 'No se pudo verificar Sheets: ' + e.message;
+  }
+}
+
+function generatePublicIdLocal(orquesta, titulo, anio) {
+  var o = cleanStringLocal(orquesta||'Desconocida').replace(/_/g, '').substring(0,25);
+  var t = cleanStringLocal(titulo||'Desconocido').replace(/_/g, '').substring(0,35);
+  var a = String(anio||'0000').replace(/\D/g, '');
+  var id = o + '_' + t + '_' + a;
+  id = id.replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return id;
+}
+
+function cleanStringLocal(str) {
+  if (!str) return 'Desconocido';
+  return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
+
+function updateSheetStats() {
+  const ready = allData.filter(x => x.audioId && x.status !== 'uploaded').length;
+  const uploaded = allData.filter(x => x.status === 'uploaded').length;
+  const sel = [...selected].filter(id => {
+    const x = allData.find(d=>d.id===id);
+    return x && x.audioId && x.status !== 'uploaded';
+  }).length;
+
+  $('ssTotal').textContent = existingIds.size || '?';
+  $('ssPending').textContent = ready;
+  $('ssSelected').textContent = sel;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════════
+function exportCSV() {
+  const data = getFiltered();
+  const rows = [['ID Tema','Título','Género','Año composición','Año grabación','Orquesta','Cantante','Duración','Música','Letra','ID Audio OGG','URL Audio','URL Página','Estado','Public ID','URL Cloudinary']];
+  data.forEach(x => rows.push([
+    x.id, x.titulo, x.genero, x.anio||'', x.anioGrabacion||'', x.orquesta||'', x.cantante||'', x.duracion||'',
+    x.musica||'', x.letra||'', x.audioId||'', x.audioId?`${CDN_OGG}${x.audioId}.ogg`:'', x.url,
+    x.status||'wait', x.publicId||'', x.cloudinaryUrl||''
+  ]));
+  dlFile(rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('
+'),'todotango_completo.csv','text/csv;charset=utf-8;');
+}
+
+function exportJSON() {
+  dlFile(JSON.stringify(getFiltered().map(x=>({
+    ...x,
+    audioUrl: x.audioId?`${CDN_OGG}${x.audioId}.ogg`:null
+  })),null,2),'todotango_completo.json','application/json');
+}
+
+function dlFile(content,name,mime) {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+content],{type:mime}));
+  a.download=name; a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function $(id){ return document.getElementById(id); }
+function setProgress(p){ $('progressFill').style.width=p+'%'; }
+function setStatus(msg){ $('statusMsg').textContent=msg; }
+function showResults(){
+  $('emptyMsg').style.display='none'; $('tableWrap').style.display='';
+  $('statsRow').style.display='grid'; $('filterRow').style.display='flex'; $('exportRow').style.display='flex';
+}
+function updateStats(){
+  const t = allData.length;
+  const tang = allData.filter(x=>/tango/i.test(x.genero)).length;
+  const vals = allData.filter(x=>/vals/i.test(x.genero)).length;
+  const mil = allData.filter(x=>/milonga/i.test(x.genero)).length;
+  const poe = allData.filter(x=>/poema/i.test(x.genero)).length;
+  const aud = allData.filter(x=>x.audioId).length;
+  const otr = Math.max(0, t-tang-vals-mil-poe);
+  $('sTot').textContent=t; $('sTan').textContent=tang; $('sVal').textContent=vals;
+  $('sMil').textContent=mil; $('sPoe').textContent=poe; $('sAud').textContent=aud; $('sOtr').textContent=otr;
+}
+function addLog(type,msg){
+  const log=$('debugLog');
+  const el=document.createElement('div');
+  el.className=`log-line log-${type}`;
+  el.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;
+  log.appendChild(el); log.scrollTop=log.scrollHeight;
+}
+function bc(g){
+  if(!g) return 'b-other';
+  const l=g.toLowerCase();
+  if(l.includes('tango')) return 'b-tango';
+  if(l.includes('vals')) return 'b-vals';
+  if(l.includes('milonga')) return 'b-milonga';
+  if(l.includes('poema')) return 'b-poema';
+  return 'b-other';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>
