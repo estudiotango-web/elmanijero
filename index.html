@@ -1,349 +1,1083 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Manijero · TDJ Tango</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Oswald:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-  <link rel="stylesheet" href="panel.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TodoTango Scraper</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0d0d; --surface: #161616; --surface2: #1f1f1f; --surface3: #252525;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.14);
+  --text: #ede9df; --text2: #7a7570; --text3: #484440;
+  --gold: #c9a84c; --red: #8b1a2a; --red-text: #e07070;
+  --green: #2a6640; --green-text: #7ec89a; --blue: #3a5a8a; --blue-text: #7aa0d0;
+  --radius: 6px; --radius-lg: 10px;
+}
+body { background:var(--bg); color:var(--text); font-family:'Georgia',serif; min-height:100vh; font-size:14px; }
+header { border-bottom:1px solid var(--border); padding:1.5rem 2rem; display:flex; align-items:center; gap:1.2rem; }
+.logo { width:44px;height:44px;border:1px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);flex-shrink:0; }
+header h1 { font-size:22px;font-weight:400;letter-spacing:.04em; }
+header p { font-size:11px;color:var(--text2);font-family:monospace;margin-top:2px; }
+main { max-width:1400px;margin:0 auto;padding:1.5rem 2rem; }
+.tabs { display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.5rem; }
+.tab { padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--gold);border-color:var(--gold); }
+.panel { display:none; }
+.panel.active { display:block; }
+.card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem; }
+.card-title { font-family:monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem; }
+.row { display:flex;gap:8px;flex-wrap:wrap;align-items:center; }
+select, input[type="text"], input[type="number"] { background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius); color:var(--text);font-size:12px;font-family:monospace;padding:7px 10px;height:34px;outline:none;transition:border-color .15s; }
+select:focus,input:focus { border-color:var(--gold); }
+#selLetra { width:80px; } #selGenero { width:170px; }
+button { height:34px;padding:0 14px;border-radius:var(--radius);border:1px solid var(--border2); background:transparent;color:var(--text);font-size:12px;font-family:monospace; cursor:pointer;letter-spacing:.04em;transition:all .15s;white-space:nowrap; }
+button:hover { background:var(--surface2); }
+button:disabled { opacity:.3;cursor:not-allowed; }
+.btn-primary { background:var(--gold);color:#0d0d0d;border-color:var(--gold);font-weight:700; }
+.btn-primary:hover { opacity:.85;background:var(--gold); }
+.btn-danger { border-color:var(--red);color:var(--red-text); }
+.btn-danger:hover { background:rgba(139,26,42,.15); }
+.btn-success { border-color:var(--green);color:var(--green-text); }
+.btn-success:hover { background:rgba(42,102,64,.2); }
+.btn-blue { border-color:var(--blue);color:var(--blue-text); }
+.btn-blue:hover { background:rgba(58,90,138,.15); }
+.progress-bar { height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px; }
+.progress-fill { height:100%;background:var(--gold);transition:width .3s; }
+.status { font-family:monospace;font-size:11px;color:var(--text2);min-height:14px; }
+.log { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius); padding:10px 12px;font-family:monospace;font-size:11px;color:var(--text2); max-height:200px;overflow-y:auto;margin-top:10px; }
+.log-line { padding:1px 0; }
+.log-ok { color:var(--green-text); } .log-err { color:var(--red-text); } .log-info { color:var(--gold); } .log-warn { color:#e0a040; }
+.stats-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:1rem; }
+.stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px; }
+.stat .n { font-size:26px;color:var(--gold);line-height:1;margin-bottom:2px; }
+.stat .l { font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em; }
+.filter-row { display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:.75rem; }
+.filter-row input[type="text"] { flex:1;min-width:180px; }
+.table-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden; }
+.table-wrap { overflow-x:auto; }
+table { width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed; }
+thead th { text-align:left;padding:9px 12px;font-family:monospace;font-size:10px;letter-spacing:.08em; text-transform:uppercase;color:var(--text3);background:var(--surface2); border-bottom:1px solid var(--border);white-space:nowrap;font-weight:400; }
+tbody td { padding:8px 12px;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:var(--surface2); }
+tbody tr.processed td { opacity:.5; }
+tbody tr.processed td:first-child { opacity:1; }
+tbody tr.processing td { background:rgba(201,168,76,.08); }
+.col-sel{width:34px}.col-titulo{width:22%}.col-genero{width:8%}.col-anio{width:6%}
+.col-orquesta{width:14%}.col-cantante{width:12%}.col-duracion{width:7%}
+.col-id{width:6%}.col-oid{width:6%}.col-status{width:8%;text-align:center}
+td a { color:var(--gold);text-decoration:none; }
+td a:hover { text-decoration:underline; }
+.badge { display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;font-family:monospace;letter-spacing:.04em;text-transform:uppercase;font-weight:700; }
+.b-tango{background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25)}
+.b-vals{background:rgba(94,160,150,.12);color:#5ea096;border:1px solid rgba(94,160,150,.25)}
+.b-milonga{background:rgba(160,120,60,.15);color:#c4895a;border:1px solid rgba(160,120,60,.25)}
+.b-poema{background:rgba(130,90,180,.12);color:#b07fd6;border:1px solid rgba(130,90,180,.25)}
+.b-other{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.status-badge{display:inline-block;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.st-wait{background:rgba(255,255,255,.05);color:var(--text3)}
+.st-ready{background:rgba(58,90,138,.15);color:var(--blue-text)}
+.st-ok{background:rgba(42,102,64,.2);color:var(--green-text)}
+.st-err{background:rgba(139,26,42,.2);color:var(--red-text)}
+.pagination{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--border);justify-content:center;font-family:monospace;font-size:11px;color:var(--text2)}
+.empty{text-align:center;padding:3rem 2rem;color:var(--text3);font-family:monospace;font-size:12px;line-height:2}
+.empty-icon{font-size:36px;opacity:.25;margin-bottom:.5rem}
+.export-row{display:flex;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.export-row .info{font-family:monospace;font-size:11px;color:var(--text3);margin-right:auto}
+input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:pointer}
+.config-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.config-item{display:flex;flex-direction:column;gap:4px}
+.config-item label{font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.config-item input{width:100%}
+.config-item .hint{font-size:10px;color:var(--text2);font-family:monospace}
+.upload-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:1rem}
+.upload-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.upload-item:last-child{border-bottom:none}
+.upload-name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upload-status{font-family:monospace;font-size:10px}
+footer{text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-family:monospace;border-top:1px solid var(--border);margin-top:2rem;letter-spacing:.04em}
+@media(max-width:640px){main{padding:1rem}.col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid{display:none}}
+</style>
+<base target="_blank">
 </head>
 <body>
 
-  <div id="yt-player" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" aria-hidden="true"></div>
-  <div class="bg-overlay"></div>
+<header>
+  <div class="logo">♪</div>
+  <div>
+    <h1>TodoTango Scraper</h1>
+    <p>Scrapear · Subir audios · Registrar en Google Sheets</p>
+  </div>
+</header>
 
-  <div id="app">
-
-    <!-- ═══════════════════════════════════════════════════════ TOPBAR -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <img src="https://res.cloudinary.com/dwgwbdtud/image/upload/v1781838389/zcl7vri8xmrryanv6s2l.png"
-          alt="El Manijero" class="logo-img"
-          onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex';" />
-        <div class="logo-fallback" id="logo-fallback" style="display:none">
-          <span class="logo-text">El <span class="logo-accent">Manijero</span></span>
-          <span class="logo-sub">TANGO DJ</span>
-        </div>
-      </div>
-      <div class="topbar-center">
-        <div class="evento-nombre" id="evento-nombre">Milonga San Telmo</div>
-        <div class="evento-meta">
-          <span id="evento-fecha">Sábado 14 jun</span>
-          <span class="sep-dot">·</span>
-          <span id="evento-hora">--:--</span>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="tanda-badge" id="tanda-badge">
-          <div class="tanda-badge-num"><i class="ti ti-music"></i> <span id="badge-temas">— temas</span></div>
-          <div class="tanda-badge-sub" id="badge-sub">Cargando…</div>
-        </div>
-        <div class="live-badge" id="live-badge">
-          <div class="live-dot"></div>
-          <span>Cargando biblioteca…</span>
-        </div>
-        <button class="btn-icon" title="Configuración"><i class="ti ti-settings"></i></button>
-      </div>
-    </header>
-
-    <!-- ═══════════════════════════════════════════════════ CONTROLES -->
-    <section class="controles-milonga">
-      <div class="controles-wrap">
-        <button id="btn-iniciar" class="btn-control btn-play" onclick="iniciarMilonga()" disabled>
-          <i class="ti ti-player-play"></i> Iniciar Tanda
-        </button>
-        <button id="btn-pausar" class="btn-control btn-pause" onclick="pausarMilonga()" disabled>
-          <i class="ti ti-player-pause"></i> Pausar
-        </button>
-        <button id="btn-stop" class="btn-control btn-stop" onclick="stopMilonga()" disabled>
-          <i class="ti ti-player-stop"></i> Stop
-        </button>
-        <div id="carga-estado" class="carga-estado" style="display:none"></div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════ LAYOUT PRINCIPAL -->
-    <div class="layout-grid">
-
-      <!-- ① SONANDO AHORA — order mobile: 1 -->
-      <div class="card card-now area-now">
-        <div class="card-eyebrow">Sonando ahora</div>
-        <div class="now-inner">
-          <div class="album-art">
-            <div class="album-placeholder"><i class="ti ti-vinyl"></i></div>
-            <div class="album-spinning-ring"></div>
-          </div>
-          <div class="now-details">
-            <div class="now-track" id="now-name">Esperando inicio</div>
-            <div class="now-orq" id="now-orq">Presioná "Iniciar Tanda" para comenzar</div>
-            <div class="now-year" id="now-year">—</div>
-            <div class="chips" id="now-chips">
-              <span class="chip ch-cortina">Sin datos aún</span>
-            </div>
-            <div class="audio-meta">
-              <span class="meta-item"><span class="meta-label">LUFS</span><span class="meta-val" id="meta-lufs">—</span></span>
-              <span class="meta-sep">·</span>
-              <span class="meta-item"><span class="meta-label">GAIN</span><span class="meta-val" id="meta-gain">—</span></span>
-              <span class="meta-item"><span class="meta-label">TRUE PEAK</span><span class="meta-val" id="meta-tp">—</span></span>
-              <span class="meta-sep">·</span>
-              <span class="meta-item"><span class="meta-label">RANGO DIN.</span><span class="meta-val" id="meta-rd">—</span></span>
-            </div>
-          </div>
-        </div>
-        <div class="waveform-wrap">
-          <canvas id="waveform-canvas" class="waveform-canvas" height="56"></canvas>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-meter">
-            <span class="vu-label">L</span>
-            <div class="vu-bar-wrap"><canvas id="vu-left" class="vu-canvas" width="12" height="80"></canvas></div>
-          </div>
-          <div class="vu-meter">
-            <span class="vu-label">R</span>
-            <div class="vu-bar-wrap"><canvas id="vu-right" class="vu-canvas" width="12" height="80"></canvas></div>
-          </div>
-          <div class="vu-scale">
-            <span>0</span><span>-6</span><span>-12</span><span>-18</span><span>-24</span><span>-∞</span>
-          </div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-bg"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-          <div class="progress-times">
-            <span id="time-current">0:00</span>
-            <span id="time-total">0:00</span>
-          </div>
-        </div>
-        <div class="now-footer">
-          <div class="ia-inline">
-            <i class="ti ti-cpu"></i>
-            <span id="ia-footer-text">IA sin datos de pista · reproducción en orden de biblioteca</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ② TANDA ACTUAL — order mobile: 2 -->
-      <div class="card card-tanda area-tanda">
-        <div class="card-eyebrow">
-          Tanda actual
-          <span class="tanda-counter" id="tanda-counter">1 / 4</span>
-        </div>
-        <div class="queue-list" id="queue-list">
-          <div class="q-item">
-            <div class="q-info">
-              <div class="q-track">Cargando biblioteca…</div>
-              <div class="q-orq">los temas aparecerán aquí</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ③ PRÓXIMA TANDA — order mobile: 3 -->
-      <div class="card card-proxima area-proxima">
-        <div class="card-eyebrow">Próxima tanda sugerida por El Manijero</div>
-        <div class="proxima-list" id="proxima-list">
-          <div class="prox-item">
-            <div class="prox-info">
-              <div class="prox-track">Sin datos aún</div>
-              <div class="prox-orq">la IA sugerirá cuando haya lectura de pista</div>
-            </div>
-          </div>
-        </div>
-        <button class="btn-ver-mas">Ver más opciones <i class="ti ti-chevron-right"></i></button>
-      </div>
-
-      <!-- ④ AUDIO IA — order mobile: 4 -->
-      <div class="card card-audio area-audio">
-        <div class="card-eyebrow">Audio · control IA</div>
-        <div class="knob-wrap">
-          <div class="knob-label">VOLUMEN GENERAL</div>
-          <div class="knob-container">
-            <canvas id="knob-canvas" width="100" height="100"></canvas>
-            <div class="knob-db" id="knob-db">-12.0 dB</div>
-          </div>
-        </div>
-        <div class="vol-rows">
-          <div class="v-row">
-            <span class="v-label">Volumen</span>
-            <input type="range" min="0" max="100" value="72" step="1" id="vol">
-            <span class="v-val" id="vol-out">72</span>
-          </div>
-          <div class="v-row">
-            <span class="v-label">Graves</span>
-            <input type="range" min="0" max="100" value="55" step="1" id="bass">
-            <span class="v-val" id="bass-out">55</span>
-          </div>
-          <div class="v-row">
-            <span class="v-label">Agudos</span>
-            <input type="range" min="0" max="100" value="48" step="1" id="treble">
-            <span class="v-val" id="treble-out">48</span>
-          </div>
-        </div>
-        <div class="sep"></div>
-        <div class="vu-vertical-wrap">
-          <div class="vu-v-meter">
-            <div class="vu-v-bar"><div class="vu-v-fill" id="vu-vf-left" style="height:0%"></div></div>
-            <span class="vu-v-label">L</span>
-          </div>
-          <div class="vu-v-meter">
-            <div class="vu-v-bar"><div class="vu-v-fill" id="vu-vf-right" style="height:0%"></div></div>
-            <span class="vu-v-label">R</span>
-          </div>
-          <div class="vu-v-scale">
-            <span>0</span><span>-6</span><span>-12</span><span>-18</span><span>-24</span><span>-∞</span>
-          </div>
-        </div>
-        <div class="sep"></div>
-        <div class="status-list">
-          <div class="status-row"><span class="status-label">Normalización LUFS</span><span class="status-on"><i class="ti ti-check"></i> Activa</span></div>
-          <div class="status-row"><span class="status-label">Fade automático</span><span class="status-on"><i class="ti ti-check"></i> Activo</span></div>
-          <div class="status-row"><span class="status-label">Ajuste por ruido</span><span class="status-on"><i class="ti ti-check"></i> Activo</span></div>
-          <div class="status-row"><span class="status-label">Crossfade</span><span class="status-cross">8 seg <i class="ti ti-chevron-down"></i></span></div>
-          <div class="status-row"><span class="status-label">Modo</span><span class="status-auto"><i class="ti ti-list-numbers"></i> Orden biblioteca</span></div>
-        </div>
-        <div class="sep"></div>
-        <div class="card-eyebrow" style="margin-bottom:10px">Pedidos del público</div>
-        <div class="pedidos" id="pedidos-list">
-          <div class="ped-item" style="opacity:0.5">
-            <div class="ped-info">
-              <div class="ped-song">Sin pedidos aún</div>
-              <div class="ped-mesa">los pedidos aparecen cuando la milonga está en curso</div>
-            </div>
-          </div>
-          <div class="ped-qr">
-            <i class="ti ti-qrcode"></i>
-            <span>Los invitados piden escaneando el QR de la mesa</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ COPILOTO — order mobile: 5 -->
-      <div class="card card-copiloto area-copiloto">
-        <div class="card-eyebrow">Copiloto El Manijero</div>
-        <div class="copiloto-inner">
-          <img src="https://res.cloudinary.com/dwgwbdtud/image/upload/v1781831795/z8prgersqwl3z0njcjp1.png"
-            alt="El Manijero" class="copiloto-avatar"
-            onerror="this.style.display='none'" />
-          <div class="copiloto-bubble">
-            <div class="ia-text" id="ia-texto">Sin datos de pista todavía. La IA se activará cuando haya información de la milonga.</div>
-          </div>
-        </div>
-        <div class="copiloto-rec">
-          <div class="rec-label">Recomendación</div>
-          <div class="rec-val" id="rec-proxima">Próximo: —</div>
-        </div>
-        <div class="copiloto-ventana">
-          <div class="ventana-label"><i class="ti ti-clock"></i> Ventana ideal</div>
-          <div class="ventana-val" id="ventana-val">— temas más</div>
-        </div>
-        <div class="ajustes-aplicados">
-          <div class="aj-label">Ajustes aplicados automáticamente</div>
-          <div class="aj-chips">
-            <span class="aj-chip" id="aj-gain">GAIN —</span>
-            <span class="aj-chip" id="aj-eq">EQ —</span>
-            <span class="aj-chip" id="aj-lufs">LUFS —</span>
-            <span class="aj-chip" id="aj-tp">TP —</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑥ LECTURA DE PISTA — order mobile: 6 -->
-      <div class="card card-pista area-pista">
-        <div class="card-eyebrow">Lectura de pista en vivo</div>
-        <div class="gauges-grid">
-          <div class="gauge-item">
-            <div class="gauge-header">🔥 ENERGÍA</div>
-            <canvas id="gauge-energia" class="gauge-arc-canvas" width="90" height="60"></canvas>
-            <div class="gauge-val" id="g-energia">—</div>
-            <div class="gauge-sub" id="g-energia-sub">—</div>
-          </div>
-          <div class="gauge-item">
-            <div class="gauge-header">👥 DENSIDAD</div>
-            <canvas id="gauge-densidad" class="gauge-arc-canvas" width="90" height="60"></canvas>
-            <div class="gauge-val" id="g-densidad">—</div>
-            <div class="gauge-sub" id="g-densidad-sub">—</div>
-          </div>
-          <div class="gauge-item">
-            <div class="gauge-header">〰️ FATIGA</div>
-            <canvas id="gauge-fatiga" class="gauge-arc-canvas" width="90" height="60"></canvas>
-            <div class="gauge-val" id="g-fatiga">—</div>
-            <div class="gauge-sub" id="g-fatiga-sub">—</div>
-          </div>
-          <div class="gauge-item">
-            <div class="gauge-header">❤️ CONEXIÓN</div>
-            <canvas id="gauge-conexion" class="gauge-arc-canvas" width="90" height="60"></canvas>
-            <div class="gauge-val" id="g-conexion">—</div>
-            <div class="gauge-sub" id="g-conexion-sub">—</div>
-          </div>
-        </div>
-        <div class="pista-meta">
-          <div class="pm-item">
-            <span class="pm-label"><i class="ti ti-users"></i> Personas</span>
-            <span class="pm-val" id="m-personas">—</span>
-            <span class="pm-sub" id="m-personas-sub">sin datos</span>
-          </div>
-          <div class="pm-item pm-gold">
-            <span class="pm-label"><i class="ti ti-user-check"></i> En pista</span>
-            <span class="pm-val" id="m-pista">—</span>
-            <span class="pm-sub" id="m-pista-sub">sin datos</span>
-          </div>
-          <div class="pm-item">
-            <span class="pm-label"><i class="ti ti-clock"></i> Restante</span>
-            <span class="pm-val" id="m-tiempo">—</span>
-            <span class="pm-sub">sin datos</span>
-          </div>
-        </div>
-        <div class="evolucion-wrap">
-          <div class="evolucion-label">EVOLUCIÓN DE ENERGÍA</div>
-          <canvas id="evolucion-canvas" class="evolucion-canvas" height="48"></canvas>
-          <div class="evolucion-axis">
-            <span id="evo-t-start">17:00</span>
-            <span id="evo-t-end">18:00</span>
-          </div>
-        </div>
-        <div class="pista-rows">
-          <div class="p-row">
-            <span class="p-label">Aplausos</span>
-            <div class="p-bar"><div class="p-fill fill-a" style="width:0%" id="bar-aplausos"></div></div>
-            <span class="p-val" id="pv-aplausos">—</span>
-          </div>
-          <div class="p-row">
-            <span class="p-label">Abandono</span>
-            <div class="p-bar"><div class="p-fill fill-r" style="width:0%" id="bar-abandono"></div></div>
-            <span class="p-val" id="pv-abandono">—</span>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /.layout-grid -->
-
-    <!-- FOOTER -->
-    <footer class="app-footer">
-      <div class="footer-meta">
-        <span class="footer-tema" id="m-tanda-sub">—</span>
-        <span class="sep-dot">·</span>
-        <span class="footer-count" id="m-tanda">0 / 0</span>
-      </div>
-      <div class="cartelito">
-        <img src="https://res.cloudinary.com/TU_CLOUD_NAME/image/upload/TU_CARTELITO.png"
-          alt="El Manijero · Tango DJ · Corazón de Tango" class="cartelito-img"
-          onerror="this.style.display='none';document.getElementById('cartelito-fallback').style.display='flex';" />
-        <div class="cartelito-fallback" id="cartelito-fallback" style="display:none">
-          <div class="cf-titulo">EL MANIJERO</div>
-          <div class="cf-sub">TANGO DJ</div>
-          <div class="cf-tag">CORAZÓN DE TANGO</div>
-        </div>
-      </div>
-    </footer>
-
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="Scrape">Scraper</div>
+    <div class="tab" data-tab="Upload">Subir</div>
+    <div class="tab" data-tab="Config">Config</div>
   </div>
 
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="panel.js"></script>
+  <!-- ════════════════════════════════ SCRAPER ════════════════════════════════ -->
+  <div class="panel active" id="panelScrape">
+    <div class="card">
+      <div class="card-title">Extraccion de TodoTango</div>
+      <div class="row">
+        <select id="selLetra">
+          <option value="a">A</option><option value="b">B</option><option value="c">C</option>
+          <option value="d">D</option><option value="e">E</option><option value="f">F</option>
+          <option value="g">G</option><option value="h">H</option><option value="i">I</option>
+          <option value="j">J</option><option value="k">K</option><option value="l">L</option>
+          <option value="m">M</option><option value="n">N</option><option value="o">O</option>
+          <option value="p">P</option><option value="q">Q</option><option value="r">R</option>
+          <option value="s">S</option><option value="t">T</option><option value="u">U</option>
+          <option value="v">V</option><option value="w">W</option><option value="y">Y</option>
+          <option value="z">Z</option>
+          <option value="ALL">Todas A-Z</option>
+        </select>
+        <select id="selGenero">
+          <option value="0">Todos los generos</option>
+          <option value="7">Tango</option><option value="8">Vals</option>
+          <option value="4">Milonga</option><option value="6">Poema</option>
+          <option value="2">Folklore</option><option value="1">Cancion</option>
+          <option value="5">Otros ritmos</option><option value="3">Foxtrot</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:monospace;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" id="chkEnrich" checked> Extraer metadata completa
+        </label>
+        <button class="btn-primary" id="btnScrape">Extraer</button>
+        <button class="btn-danger" id="btnStop" style="display:none">Detener</button>
+      </div>
+      <div id="progressWrap" style="display:none;margin-top:10px">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="status" id="statusMsg"></div>
+      </div>
+      <div class="log" id="debugLog" style="display:none"></div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat"><div class="n" id="sTot">0</div><div class="l">Total</div></div>
+      <div class="stat"><div class="n" id="sTan">0</div><div class="l">Tangos</div></div>
+      <div class="stat"><div class="n" id="sVal">0</div><div class="l">Vals</div></div>
+      <div class="stat"><div class="n" id="sMil">0</div><div class="l">Milongas</div></div>
+      <div class="stat"><div class="n" id="sPoe">0</div><div class="l">Poemas</div></div>
+      <div class="stat"><div class="n" id="sAud">0</div><div class="l">Con audio</div></div>
+      <div class="stat"><div class="n" id="sOtr">0</div><div class="l">Otros</div></div>
+    </div>
+
+    <div class="filter-row" id="filterRow" style="display:none">
+      <input type="text" id="filterText" placeholder="Buscar titulo, orquesta, cantante...">
+      <select id="filterGenero">
+        <option value="">Todos los generos</option>
+        <option value="tango">Tango</option><option value="vals">Vals</option>
+        <option value="milonga">Milonga</option><option value="poema">Poema</option>
+        <option value="cancion">Cancion</option><option value="folklore">Folklore</option>
+        <option value="foxtrot">Foxtrot</option>
+      </select>
+      <select id="filterAudio">
+        <option value="">Con y sin audio</option>
+        <option value="yes">Solo con audio</option>
+        <option value="no">Solo sin audio</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">Todos los estados</option>
+        <option value="ready">Listos para subir</option>
+        <option value="uploaded">Ya subidos</option>
+      </select>
+      <select id="sortBy">
+        <option value="titulo">Titulo A-Z</option>
+        <option value="anio">Ano</option>
+        <option value="genero">Genero</option>
+        <option value="id">ID</option>
+      </select>
+      <button id="btnSelTodo">Todo</button>
+      <button id="btnSelNada">Ninguno</button>
+      <button id="btnSelAudio" style="color:var(--green-text)">Solo audio</button>
+      <button id="btnSelReady" style="color:var(--blue-text)">Listos</button>
+    </div>
+
+    <div class="table-card">
+      <div class="empty" id="emptyMsg">
+        <div class="empty-icon">&#9836;</div>
+        Selecciona una letra y haz clic en <strong>Extraer</strong>
+      </div>
+      <div id="tableWrap" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-sel"><input type="checkbox" id="chkAll"></th>
+                <th class="col-titulo">Titulo</th>
+                <th class="col-genero">Genero</th>
+                <th class="col-anio">Ano</th>
+                <th class="col-orquesta">Orquesta</th>
+                <th class="col-cantante">Cantante</th>
+                <th class="col-duracion">Duracion</th>
+                <th class="col-id">ID</th>
+                <th class="col-oid">OGG</th>
+                <th class="col-status">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination" style="display:none">
+          <button id="btnPrevPage">Ant.</button>
+          <span id="pageInfo"></span>
+          <button id="btnNextPage">Sig.</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-row" id="exportRow" style="display:none">
+      <span class="info" id="exportInfo"></span>
+      <button id="btnCsv">CSV</button>
+      <button id="btnJson">JSON</button>
+      <button class="btn-blue" id="btnGoUpload">Ir a Subir</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ UPLOAD ════════════════════════════════ -->
+  <div class="panel" id="panelUpload">
+    <div class="card">
+      <div class="card-title">Subir a Cloudinary + Google Sheets</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:1rem;">
+        El audio se sube <strong>directamente</strong> a Cloudinary desde tu browser.<br>
+        Necesitas un <strong>upload preset unsigned</strong> en tu cuenta de Cloudinary.
+      </p>
+      <div class="row" style="margin-bottom:10px">
+        <input type="number" id="uploadConcurrency" value="2" min="1" max="4" style="width:60px" title="Subidas simultaneas">
+        <label style="font-size:11px;font-family:monospace;color:var(--text2)">simultaneas</label>
+        <button class="btn-primary" id="btnUpload">Subir seleccionados</button>
+        <button class="btn-danger" id="btnUploadStop" style="display:none">Detener</button>
+        <button id="btnRefreshSheet">Actualizar estado</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill" style="width:0%"></div></div>
+      <div class="status" id="uploadStatus"></div>
+    </div>
+
+    <div class="card" id="uploadQueueCard" style="display:none">
+      <div class="card-title">Cola — <span id="uploadQueueInfo"></span></div>
+      <div class="upload-panel" id="uploadGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Resumen de Google Sheets</div>
+      <div class="stats-row" style="display:grid">
+        <div class="stat"><div class="n" id="ssTotal">?</div><div class="l">En Sheets</div></div>
+        <div class="stat"><div class="n" id="ssPending">?</div><div class="l">Pendientes</div></div>
+        <div class="stat"><div class="n" id="ssSelected">0</div><div class="l">Seleccionados</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ CONFIG ════════════════════════════════ -->
+  <div class="panel" id="panelConfig">
+    <div class="card">
+      <div class="card-title">Configuracion</div>
+      <div class="config-grid">
+        <div class="config-item">
+          <label>URL del Apps Script</label>
+          <input type="text" id="cfgProxy" placeholder="https://script.google.com/macros/s/.../exec">
+          <span class="hint">URL de tu deployment publico</span>
+        </div>
+        <div class="config-item">
+          <label>Cloudinary Cloud Name</label>
+          <input type="text" id="cfgCloudName" placeholder="dwgwbdtud">
+          <span class="hint">Nombre de tu cuenta en Cloudinary</span>
+        </div>
+        <div class="config-item">
+          <label>Cloudinary Upload Preset (unsigned)</label>
+          <input type="text" id="cfgPreset" placeholder="dra_bruzera_unsigned">
+          <span class="hint">Debe ser tipo "unsigned" en tu Cloudinary</span>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn-success" id="btnSaveConfig">Guardar</button>
+        <button id="btnTestConn" style="margin-left:8px">Probar conexion</button>
+        <span id="configStatus" style="margin-left:12px;font-family:monospace;font-size:11px;color:var(--text2)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Como configurar el Apps Script</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.9">
+        <p><strong>1.</strong> Copia <code>Code.gs</code> en un nuevo proyecto de Apps Script.</p>
+        <p><strong>2.</strong> Ajusta <code>SHEET_ID</code> y <code>SHEET_NAME</code> en el archivo.</p>
+        <p><strong>3.</strong> Deploy → <em>New deployment</em> → Web app → <strong>Execute as: Me</strong> → <strong>Who has access: Anyone</strong>.</p>
+        <p><strong>4.</strong> Copia la URL del deployment y pegala arriba.</p>
+        <p><strong>5.</strong> En Cloudinary: Settings → Upload → Add upload preset → <em>Unsigned</em>. Copia el nombre.</p>
+        <p><strong>6.</strong> Guarda la config, haz clic en "Probar conexion".</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>scraper no oficial · datos (c) todotango.com · uso personal</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTES
+// ═══════════════════════════════════════════════════════════════
+const CDN_OGG  = 'https://sbits.us-sea-1.linodeobjects.com/todotango/ogg/';
+const ALPHABET = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','y','z'];
+const GENRE_SLUG = {
+  '0':'todos','1':'Canci%25c3%25b3n','2':'Folklore','3':'Foxtrot',
+  '4':'Milonga','5':'Otros%2520ritmos','6':'Poema','7':'Tango','8':'Vals'
+};
+const PAGE_SIZE = 50;
+
+// ═══════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════
+var allData     = [];
+var selected    = new Set();
+var currentPage = 1;
+var running     = false;
+var abortFlag   = false;
+var uploadRunning  = false;
+var uploadAbort    = false;
+var existingIds    = new Set();
+
+var cfg = {
+  proxyUrl:   localStorage.getItem('tt_proxy')     || '',
+  cloudName:  localStorage.getItem('tt_cldName')   || 'dwgwbdtud',
+  preset:     localStorage.getItem('tt_cldPreset') || 'dra_bruzera_unsigned'
+};
+
+// Cargar config en UI
+document.getElementById('cfgProxy').value     = cfg.proxyUrl;
+document.getElementById('cfgCloudName').value = cfg.cloudName;
+document.getElementById('cfgPreset').value    = cfg.preset;
+
+// ═══════════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('panel' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'Upload') updateSheetStats();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnSaveConfig').addEventListener('click', function() {
+  cfg.proxyUrl  = document.getElementById('cfgProxy').value.trim();
+  cfg.cloudName = document.getElementById('cfgCloudName').value.trim();
+  cfg.preset    = document.getElementById('cfgPreset').value.trim();
+  localStorage.setItem('tt_proxy',     cfg.proxyUrl);
+  localStorage.setItem('tt_cldName',   cfg.cloudName);
+  localStorage.setItem('tt_cldPreset', cfg.preset);
+  showCfgStatus('Guardado');
+});
+
+document.getElementById('btnTestConn').addEventListener('click', async function() {
+  showCfgStatus('Probando...');
+  try {
+    var r = await fetch(cfg.proxyUrl + '?action=status');
+    var d = await r.json();
+    if (d.status === 'ok') {
+      showCfgStatus('OK v' + d.version + (d.sheetConnected ? ' — Sheets conectado' : ' — Sheets SIN configurar'));
+    } else {
+      showCfgStatus('Error: ' + (d.error || 'desconocido'));
+    }
+  } catch(e) {
+    showCfgStatus('Error: ' + e.message);
+  }
+});
+
+function showCfgStatus(msg) {
+  var el = document.getElementById('configStatus');
+  el.textContent = msg;
+  setTimeout(function() { el.textContent = ''; }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROXY HELPERS
+// ═══════════════════════════════════════════════════════════════
+async function proxyGet(url) {
+  var r = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(url), { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  var d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d.contents || '';
+}
+
+// Todo via GET — Apps Script POST dispara preflight OPTIONS que CORS bloquea.
+// GET simple no tiene preflight y Apps Script lo responde con CORS OK.
+async function proxyAction(action, payload) {
+  var url = cfg.proxyUrl + '?action=' + encodeURIComponent(action);
+  if (payload && Object.keys(payload).length) {
+    url += '&data=' + encodeURIComponent(JSON.stringify(payload));
+  }
+  var r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCRAPING
+// ═══════════════════════════════════════════════════════════════
+async function fetchLetter(letter, generoId) {
+  var genre = GENRE_SLUG[generoId] || 'todos';
+  var url = 'https://www.todotango.com/musica/obras/letras/' + letter + '/0/' + genre;
+  addLog('info', 'GET ' + url);
+
+  var html;
+  try { html = await proxyGet(url); }
+  catch(e) { addLog('err', 'Error proxy: ' + e.message); return []; }
+  if (!html) { addLog('err', 'Respuesta vacia'); return []; }
+  addLog('ok', 'HTML: ' + html.length + ' chars');
+
+  var items = [];
+  var seen  = new Set();
+
+  // Patron 1: href con title="Titulo (Genero)"
+  var re1 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*title="([^"(]+)\(([^)]+)\)"/g;
+  var m;
+  while ((m = re1.exec(html)) !== null) {
+    var id = parseInt(m[2], 10);
+    if (!seen.has(id)) {
+      seen.add(id);
+      items.push(makeItem(id, m[3].trim(), m[4].trim(), m[1]));
+    }
+  }
+
+  // Patron 2: link seguido de (Genero)
+  if (!items.length) {
+    var re2 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*>([^<]+)<\/a>[^(]*\(([^)]+)\)/g;
+    while ((m = re2.exec(html)) !== null) {
+      var id2 = parseInt(m[2], 10);
+      if (!seen.has(id2)) {
+        seen.add(id2);
+        items.push(makeItem(id2, m[3].trim(), m[4].trim(), m[1]));
+      }
+    }
+  }
+
+  // Patron 3: solo href
+  if (!items.length) {
+    var re3 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/([^"\/]+)\/)"/g;
+    while ((m = re3.exec(html)) !== null) {
+      var id3 = parseInt(m[2], 10);
+      if (!seen.has(id3)) {
+        seen.add(id3);
+        var titulo = decodeURIComponent(m[3].replace(/-/g, ' ')).replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        items.push(makeItem(id3, titulo, '', m[1]));
+      }
+    }
+  }
+
+  addLog(items.length ? 'ok' : 'warn', 'Encontrados: ' + items.length);
+  if (!items.length) addLog('warn', 'Snippet: ' + html.slice(0, 300).replace(/\s+/g, ' '));
+  return items;
+}
+
+function makeItem(id, titulo, genero, url) {
+  return { id: id, titulo: titulo, genero: genero, url: url,
+    musica: '', letra: '', anio: '', audioId: null,
+    orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' };
+}
+
+// Extrae texto limpio de una etiqueta HTML — elimina todo el HTML interno
+function tagText(html, tag) {
+  var m = html.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)<\\/' + tag + '>', 'i'));
+  return m ? m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+}
+
+// Extrae el primer texto de un <a> dentro de un bloque que contiene 'label'
+function labeledLink(html, label) {
+  // Busca: <td ...>label</td><td ...><a ...>VALOR</a>
+  var re = new RegExp(label + '[\\s\\S]{0,200}?<a[^>]+>([^<]{2,80})<\/a>', 'i');
+  var m = html.match(re);
+  if (m) return m[1].trim();
+  // Fallback: label: VALOR (sin link)
+  var re2 = new RegExp(label + '[^:]*:\\s*<[^>]+>([^<]{2,80})<', 'i');
+  var m2 = html.match(re2);
+  return m2 ? m2[1].trim() : '';
+}
+
+async function enrichItem(item) {
+  var html;
+  try { html = await proxyGet(item.url); }
+  catch(e) { return; }
+  if (!html) return;
+
+  // ── Audio ID ──
+  // TodoTango guarda el id en un objeto JS tipo: {oga:"https://.../ogg/1738.ogg",...}
+  // Tomamos solo el numero del path, no todo el string del objeto
+  var audioPatterns = [
+    /["']?oga["']?\s*:\s*["'][^"']*?\/ogg\/(\d+)\.ogg/i,
+    /sbits\.us[^"'\s]*?\/(\d+)\.ogg/i,
+    /todotango\/ogg\/(\d+)/i,
+    /EscucharTema\s*\(\s*(\d+)/i,
+    /PlayTema\s*\(\s*(\d+)/i,
+    /["']idSonido["']\s*:\s*(\d+)/i
+  ];
+  for (var i = 0; i < audioPatterns.length; i++) {
+    var mm = html.match(audioPatterns[i]);
+    if (mm && mm[1]) { item.audioId = parseInt(mm[1], 10); break; }
+  }
+
+  // ── Orquesta — buscar dentro de estructura de tabla de TodoTango ──
+  // La página tiene celdas tipo: <td class="...">Orquesta</td><td ...><a href="...">D'Arienzo</a>
+  var orqVal = labeledLink(html, 'Orquesta');
+  if (orqVal && orqVal.length < 60) item.orquesta = orqVal;
+
+  // ── Cantante ──
+  if (/instrumental/i.test(html)) {
+    item.cantante = 'Instrumental';
+  } else {
+    var cantVal = labeledLink(html, 'Cantor') ||
+                  labeledLink(html, 'Cantante') ||
+                  labeledLink(html, 'Voz');
+    if (cantVal && cantVal.length < 60) item.cantante = cantVal;
+  }
+
+  // ── Compositor / Música ──
+  var musicaVal = labeledLink(html, 'M\\u00fasica') ||
+                  labeledLink(html, 'Musica') ||
+                  labeledLink(html, 'Música');
+  if (musicaVal && musicaVal.length < 80) item.musica = musicaVal;
+
+  // ── Letrista ──
+  var letraVal = labeledLink(html, 'Letra');
+  if (letraVal && letraVal.length < 80) item.letra = letraVal;
+
+  // ── Género — si no vino de la lista, buscarlo en el h1/h2 de la página ──
+  if (!item.genero) {
+    var gm = html.match(/<h[1-3][^>]*>[\s\S]*?(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)[\s\S]*?<\/h[1-3]>/i);
+    if (gm) item.genero = gm[1];
+  }
+
+  // ── Año composición ──
+  // Buscar patrón "Tango 1929" o similar cercano al género
+  var anioCompMatch = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
+  if (anioCompMatch) item.anio = anioCompMatch[1];
+
+  // ── Año grabación — buscar fecha DD/MM/YYYY o YYYY cerca de "grabaci" ──
+  var anioGrabMatch = html.match(/grabaci[oó]n[^\d]{0,30}(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/i) ||
+                      html.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if (anioGrabMatch) item.anioGrabacion = anioGrabMatch[3];
+
+  // ── Duración — buscar M:SS o M'SS en el HTML ──
+  var durMatch = html.match(/(\d{1,2})[':](\d{2})(?:[""]|(?!\d))/);
+  if (durMatch) item.duracion = durMatch[1] + ':' + durMatch[2];
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCRAPE PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnScrape').addEventListener('click', startScrape);
+document.getElementById('btnStop').addEventListener('click', function() {
+  abortFlag = true;
+  setStatus('Deteniendo...');
+  document.getElementById('btnStop').style.display = 'none';
+});
+
+async function startScrape() {
+  if (running) return;
+  if (!cfg.proxyUrl) { alert('Primero configura la URL del Apps Script en Config.'); return; }
+
+  running = true; abortFlag = false;
+  allData = []; selected.clear(); currentPage = 1;
+
+  document.getElementById('btnScrape').disabled = true;
+  document.getElementById('btnStop').style.display = '';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('debugLog').style.display = '';
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('filterRow').style.display = 'none';
+  document.getElementById('exportRow').style.display = 'none';
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('emptyMsg').style.display = '';
+  document.getElementById('emptyMsg').innerHTML = '<div class="empty-icon">&#9837;</div>Extrayendo...';
+  setProgress(0);
+
+  var letraVal = document.getElementById('selLetra').value;
+  var generoId = document.getElementById('selGenero').value;
+  var letters  = letraVal === 'ALL' ? ALPHABET : [letraVal];
+
+  for (var li = 0; li < letters.length; li++) {
+    if (abortFlag) break;
+    setStatus('Letra "' + letters[li].toUpperCase() + '" (' + (li+1) + '/' + letters.length + ')');
+    var items = await fetchLetter(letters[li], generoId);
+    allData.push.apply(allData, items);
+    if (allData.length) showResults();
+    renderTable(); updateStats();
+    setProgress(Math.round((li+1) / letters.length * 50));
+    if (letters.length > 1) await sleep(600);
+  }
+
+  showResults(); renderTable(); updateStats();
+
+  if (document.getElementById('chkEnrich').checked && allData.length) {
+    setStatus(allData.length + ' temas. Extrayendo metadata...');
+    for (var i = 0; i < allData.length; i++) {
+      if (abortFlag) break;
+      await enrichItem(allData[i]);
+      setProgress(50 + Math.round((i+1) / allData.length * 45));
+      if (i % 5 === 0) { renderTable(); updateStats(); }
+      await sleep(300);
+    }
+  }
+
+  await refreshSheetStatus();
+  renderTable(); updateStats();
+  setProgress(100);
+  var conAudio = allData.filter(function(x) { return x.audioId; }).length;
+  setStatus('Listo: ' + allData.length + ' temas, ' + conAudio + ' con audio.');
+  document.getElementById('btnScrape').disabled = false;
+  document.getElementById('btnStop').style.display = 'none';
+  running = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TABLA Y FILTROS
+// ═══════════════════════════════════════════════════════════════
+['filterText','filterGenero','filterAudio','filterStatus','sortBy'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', renderTable);
+});
+document.getElementById('filterText').addEventListener('input', renderTable);
+
+document.getElementById('chkAll').addEventListener('change', function() {
+  getFiltered().forEach(function(x) {
+    if (this.checked) selected.add(x.id); else selected.delete(x.id);
+  }.bind(this));
+  renderTable();
+});
+
+document.getElementById('btnSelTodo').addEventListener('click', function()  { allData.forEach(function(x) { selected.add(x.id); });    renderTable(); });
+document.getElementById('btnSelNada').addEventListener('click', function()  { allData.forEach(function(x) { selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnSelAudio').addEventListener('click', function() { allData.forEach(function(x) { if (x.audioId) selected.add(x.id); else selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnSelReady').addEventListener('click', function() { allData.forEach(function(x) { if (x.audioId && x.status !== 'uploaded') selected.add(x.id); else selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnPrevPage').addEventListener('click', function() { changePage(-1); });
+document.getElementById('btnNextPage').addEventListener('click', function() { changePage(1); });
+document.getElementById('btnCsv').addEventListener('click',  exportCSV);
+document.getElementById('btnJson').addEventListener('click', exportJSON);
+document.getElementById('btnGoUpload').addEventListener('click', function() {
+  document.querySelectorAll('.tab')[1].click();
+});
+
+function getFiltered() {
+  var txt    = (document.getElementById('filterText').value || '').toLowerCase();
+  var gen    = (document.getElementById('filterGenero').value || '').toLowerCase();
+  var audio  = document.getElementById('filterAudio').value;
+  var stFlt  = document.getElementById('filterStatus').value;
+  var sort   = document.getElementById('sortBy').value;
+
+  var data = allData.filter(function(x) {
+    var mt = !txt  || [x.titulo, x.orquesta, x.cantante, x.musica].join(' ').toLowerCase().indexOf(txt) !== -1;
+    var mg = !gen  || (x.genero || '').toLowerCase().indexOf(gen) !== -1;
+    var ma = !audio || (audio === 'yes' ? !!x.audioId : !x.audioId);
+    var ms = !stFlt ||
+      (stFlt === 'ready'    ? (x.audioId && x.status !== 'uploaded') :
+       stFlt === 'uploaded' ? x.status === 'uploaded' : true);
+    return mt && mg && ma && ms;
+  });
+
+  data.sort(function(a, b) {
+    if (sort === 'titulo') return a.titulo.localeCompare(b.titulo, 'es');
+    if (sort === 'anio')   return (parseInt(a.anio, 10) || 9999) - (parseInt(b.anio, 10) || 9999);
+    if (sort === 'genero') return (a.genero || '').localeCompare(b.genero || '', 'es');
+    if (sort === 'id')     return a.id - b.id;
+    return 0;
+  });
+  return data;
+}
+
+function renderTable() {
+  var filtered = getFiltered();
+  var total    = filtered.length;
+  var pages    = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > pages) currentPage = 1;
+  var slice = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  var html = '';
+  for (var i = 0; i < slice.length; i++) {
+    var x = slice[i];
+    var hasAudio    = x.audioId != null;
+    var isUploaded  = x.status === 'uploaded';
+    var isProcessing = x.status === 'processing';
+    var rowClass    = isUploaded ? 'processed' : isProcessing ? 'processing' : '';
+
+    var badge = isUploaded ? '<span class="status-badge st-ok">OK</span>' :
+                hasAudio   ? '<span class="status-badge st-ready">Listo</span>' :
+                             '<span class="status-badge st-wait">Sin audio</span>';
+
+    html += '<tr class="' + rowClass + '">' +
+      '<td class="col-sel"><input type="checkbox" data-id="' + x.id + '"' +
+        (selected.has(x.id) ? ' checked' : '') +
+        (isUploaded ? ' disabled' : '') + '></td>' +
+      '<td class="col-titulo" title="' + esc(x.titulo) + '"><a href="' + x.url + '">' + esc(x.titulo) + '</a></td>' +
+      '<td class="col-genero"><span class="badge ' + bc(x.genero) + '">' + esc(x.genero || '-') + '</span></td>' +
+      '<td class="col-anio">' + (x.anio || '-') + '</td>' +
+      '<td class="col-orquesta" title="' + esc(x.orquesta) + '">' + esc(x.orquesta || x.musica || '-') + '</td>' +
+      '<td class="col-cantante" title="' + esc(x.cantante) + '">' + esc(x.cantante || '-') + '</td>' +
+      '<td class="col-duracion">' + (x.duracion || '-') + '</td>' +
+      '<td class="col-id" style="color:var(--text3)">' + x.id + '</td>' +
+      '<td class="col-oid" style="color:' + (x.audioId ? 'var(--green-text)' : 'var(--text3)') + '">' + (x.audioId || '-') + '</td>' +
+      '<td class="col-status">' + badge + '</td>' +
+      '</tr>';
+  }
+
+  document.getElementById('tbody').innerHTML = html;
+
+  // Delegar eventos de checkbox en tbody
+  document.getElementById('tbody').querySelectorAll('input[type="checkbox"]').forEach(function(chk) {
+    chk.addEventListener('change', function() {
+      var id = parseInt(this.dataset.id, 10);
+      if (this.checked) selected.add(id); else selected.delete(id);
+      renderTable();
+    });
+  });
+
+  document.getElementById('pageInfo').textContent = 'Pag ' + currentPage + '/' + pages + ' — ' + total + ' resultados';
+  document.getElementById('pagination').style.display = total > PAGE_SIZE ? 'flex' : 'none';
+  document.getElementById('exportInfo').textContent = selected.size + ' sel · ' + total + ' filtrados · ' + allData.length + ' total';
+
+  var chkAll = document.getElementById('chkAll');
+  chkAll.indeterminate = selected.size > 0 && selected.size < allData.length;
+  chkAll.checked = selected.size > 0 && selected.size === allData.length;
+
+  updateSheetStats();
+}
+
+function changePage(dir) {
+  var pages = Math.ceil(getFiltered().length / PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(pages, currentPage + dir));
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UPLOAD — Cloudinary directo desde browser + Sheets via proxy
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnUpload').addEventListener('click',     startUpload);
+document.getElementById('btnUploadStop').addEventListener('click', function() {
+  uploadAbort = true;
+  document.getElementById('uploadStatus').textContent = 'Deteniendo...';
+  document.getElementById('btnUploadStop').style.display = 'none';
+});
+document.getElementById('btnRefreshSheet').addEventListener('click', refreshSheetStatus);
+
+async function startUpload() {
+  if (uploadRunning) return;
+  if (!cfg.proxyUrl)  { alert('Configura la URL del Apps Script.'); return; }
+  if (!cfg.cloudName) { alert('Configura el Cloud Name de Cloudinary.'); return; }
+  if (!cfg.preset)    { alert('Configura el Upload Preset de Cloudinary.'); return; }
+
+  var itemsToUpload = [];
+  selected.forEach(function(id) {
+    var x = allData.find(function(d) { return d.id === id; });
+    if (x && x.audioId && x.status !== 'uploaded') itemsToUpload.push(x);
+  });
+
+  if (!itemsToUpload.length) {
+    alert('No hay temas listos para subir seleccionados.\n\nAsegurate de:\n1. Haber extraido temas\n2. Seleccionar temas con audio (columna OGG en verde)\n3. Que no esten ya subidos');
+    return;
+  }
+
+  uploadRunning = true; uploadAbort = false;
+  document.getElementById('btnUpload').disabled = true;
+  document.getElementById('btnUploadStop').style.display = '';
+  document.getElementById('uploadQueueCard').style.display = '';
+
+  var concurrency = Math.max(1, Math.min(4, parseInt(document.getElementById('uploadConcurrency').value, 10) || 2));
+  var total = itemsToUpload.length;
+  var done  = 0;
+
+  // Construir cola visual
+  var gridHtml = '';
+  for (var i = 0; i < itemsToUpload.length; i++) {
+    var x = itemsToUpload[i];
+    gridHtml += '<div class="upload-item" id="uitem-' + i + '">' +
+      '<span class="upload-name">' + esc(x.titulo) + ' — ' + esc(x.orquesta || x.musica || '?') + '</span>' +
+      '<span class="upload-status" id="ustatus-' + i + '">En cola</span>' +
+      '</div>';
+  }
+  document.getElementById('uploadGrid').innerHTML = gridHtml;
+  document.getElementById('uploadStatus').textContent = 'Subiendo ' + total + ' temas...';
+
+  var qIdx = 0;
+
+  async function worker() {
+    while (qIdx < itemsToUpload.length && !uploadAbort) {
+      var idx  = qIdx++;
+      var item = itemsToUpload[idx];
+
+      item.status = 'processing';
+      setUStatus(idx, 'Subiendo...', 'var(--gold)');
+      renderTable();
+
+      try {
+        // 1) Descargar OGG via proxy (necesario por CORS del CDN)
+        var oggUrl = CDN_OGG + item.audioId + '.ogg';
+        var oggResp = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(oggUrl), { cache: 'no-store' });
+        if (!oggResp.ok) throw new Error('No se pudo descargar el OGG (HTTP ' + oggResp.status + ')');
+
+        // El proxy devuelve JSON con contents = texto. Para binarios usamos el blob directamente
+        // En realidad el Apps Script devuelve texto. Para audio necesitamos fetch directo al CDN.
+        // NOTA: el CDN de linodeobjects probablemente tenga CORS abierto (Content-Delivery).
+        // Si no, el proxy necesita devolver base64. Ver nota abajo.
+        var audioBlob = await fetchAudioBlob(oggUrl);
+
+        // 2) Subir a Cloudinary directamente
+        var publicId = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
+        var cdnUrl   = await uploadToCloudinary(audioBlob, publicId);
+
+        item.publicId      = publicId;
+        item.cloudinaryUrl = cdnUrl;
+
+        // 3) Registrar en Sheets via proxy
+        // Solo mandamos los campos necesarios para no superar el limite de URL (~2000 chars)
+        var trackMin = {
+          id: item.id, titulo: item.titulo, orquesta: item.orquesta, musica: item.musica,
+          cantante: item.cantante, genero: item.genero, anio: item.anio,
+          anioGrabacion: item.anioGrabacion, duracion: item.duracion, audioId: item.audioId
+        };
+        var sheetResult = await proxyAction('write', {
+          track: trackMin, cloudinaryUrl: cdnUrl, publicId: publicId
+        });
+
+        if (sheetResult.error) throw new Error('Sheets: ' + sheetResult.error);
+
+        item.status = 'uploaded';
+        setUStatus(idx, 'OK ✓', 'var(--green-text)');
+        addLog('ok', 'Subido: ' + item.titulo + ' → ' + publicId);
+
+      } catch(e) {
+        item.status = 'wait';
+        setUStatus(idx, 'Error: ' + e.message.slice(0, 60), 'var(--red-text)');
+        addLog('err', item.titulo + ': ' + e.message);
+      }
+
+      done++;
+      document.getElementById('uploadProgressFill').style.width = Math.round(done / total * 100) + '%';
+      document.getElementById('uploadQueueInfo').textContent    = done + '/' + total;
+      document.getElementById('uploadStatus').textContent       = done + '/' + total + ' procesados';
+      renderTable();
+      await sleep(150);
+    }
+  }
+
+  // Pool de workers
+  var pool = [];
+  for (var w = 0; w < concurrency; w++) pool.push(worker());
+  await Promise.all(pool);
+
+  var ok  = itemsToUpload.filter(function(x) { return x.status === 'uploaded'; }).length;
+  var err = total - ok;
+  document.getElementById('uploadStatus').textContent = 'Listo: ' + ok + ' subidos' + (err ? ', ' + err + ' errores' : '');
+  document.getElementById('btnUpload').disabled = false;
+  document.getElementById('btnUploadStop').style.display = 'none';
+  uploadRunning = false;
+
+  await refreshSheetStatus();
+}
+
+function setUStatus(idx, msg, color) {
+  var el = document.getElementById('ustatus-' + idx);
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+/* ─── Descargar audio (intenta directo primero, luego via proxy base64) ─── */
+async function fetchAudioBlob(url) {
+  // Intento 1: fetch directo (funciona si el CDN tiene CORS abierto)
+  try {
+    var r = await fetch(url);
+    if (r.ok) return await r.blob();
+  } catch(e) { /* CORS bloqueado, intento 2 */ }
+
+  // Intento 2: pedir al proxy que devuelva base64
+  // El Apps Script necesita el endpoint ?url=...&b64=1
+  // y devolver { base64: "...", mimeType: "audio/ogg" }
+  var r2 = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(url) + '&b64=1', { cache: 'no-store' });
+  if (!r2.ok) throw new Error('Proxy no pudo descargar el audio');
+  var d2 = await r2.json();
+  if (d2.error) throw new Error(d2.error);
+  if (!d2.base64) throw new Error('Proxy no devolvio base64');
+
+  var byteStr  = atob(d2.base64);
+  var arr      = new Uint8Array(byteStr.length);
+  for (var i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+  return new Blob([arr], { type: d2.mimeType || 'audio/ogg' });
+}
+
+/* ─── Subir blob a Cloudinary (unsigned) ─── */
+async function uploadToCloudinary(blob, publicId) {
+  var form = new FormData();
+  form.append('file',            blob, publicId + '.ogg');
+  form.append('upload_preset',   cfg.preset);
+  form.append('public_id',       publicId);
+  form.append('resource_type',   'raw');
+
+  var r = await fetch('https://api.cloudinary.com/v1_1/' + cfg.cloudName + '/raw/upload', {
+    method: 'POST',
+    body: form
+  });
+  var d = await r.json();
+  if (d.error) throw new Error('Cloudinary: ' + d.error.message);
+  return d.secure_url;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHEETS STATUS
+// ═══════════════════════════════════════════════════════════════
+async function refreshSheetStatus() {
+  if (!cfg.proxyUrl) return;
+  try {
+    document.getElementById('uploadStatus').textContent = 'Verificando Sheets...';
+    var result = await proxyAction('getIds', {});
+    if (result.ids) {
+      existingIds = new Set(result.ids);
+      allData.forEach(function(item) {
+        var pid = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
+        if (existingIds.has(pid)) item.status = 'uploaded';
+      });
+      renderTable();
+      updateSheetStats();
+      document.getElementById('uploadStatus').textContent = existingIds.size + ' temas ya en Sheets';
+    }
+  } catch(e) {
+    document.getElementById('uploadStatus').textContent = 'No se pudo verificar: ' + e.message;
+  }
+}
+
+function updateSheetStats() {
+  var ready    = allData.filter(function(x) { return x.audioId && x.status !== 'uploaded'; }).length;
+  var uploaded = allData.filter(function(x) { return x.status === 'uploaded'; }).length;
+  var sel = 0;
+  selected.forEach(function(id) {
+    var x = allData.find(function(d) { return d.id === id; });
+    if (x && x.audioId && x.status !== 'uploaded') sel++;
+  });
+  document.getElementById('ssTotal').textContent    = existingIds.size || uploaded || '?';
+  document.getElementById('ssPending').textContent  = ready;
+  document.getElementById('ssSelected').textContent = sel;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════════
+function exportCSV() {
+  var data = getFiltered();
+  var rows = [['ID','Titulo','Genero','Anio composicion','Anio grabacion','Orquesta','Cantante','Duracion','Musica','Letra','ID Audio OGG','URL Audio','URL Pagina','Estado','Public ID','URL Cloudinary']];
+  data.forEach(function(x) {
+    rows.push([x.id, x.titulo, x.genero, x.anio||'', x.anioGrabacion||'', x.orquesta||'', x.cantante||'', x.duracion||'',
+      x.musica||'', x.letra||'', x.audioId||'', x.audioId ? CDN_OGG+x.audioId+'.ogg' : '', x.url,
+      x.status||'wait', x.publicId||'', x.cloudinaryUrl||'']);
+  });
+  var csv = rows.map(function(r) {
+    return r.map(function(v) { return '"' + String(v).replace(/"/g,'""') + '"'; }).join(',');
+  }).join('\n');
+  dlFile(csv, 'todotango.csv', 'text/csv;charset=utf-8;');
+}
+
+function exportJSON() {
+  var out = getFiltered().map(function(x) {
+    return { id:x.id, titulo:x.titulo, genero:x.genero, anio:x.anio, anioGrabacion:x.anioGrabacion,
+      orquesta:x.orquesta, cantante:x.cantante, duracion:x.duracion, musica:x.musica, letra:x.letra,
+      audioId:x.audioId, audioUrl: x.audioId ? CDN_OGG+x.audioId+'.ogg' : null,
+      url:x.url, status:x.status||'wait', publicId:x.publicId||'', cloudinaryUrl:x.cloudinaryUrl||'' };
+  });
+  dlFile(JSON.stringify(out, null, 2), 'todotango.json', 'application/json');
+}
+
+function dlFile(content, name, mime) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + content], { type: mime }));
+  a.download = name; a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setProgress(p) { document.getElementById('progressFill').style.width = p + '%'; }
+function setStatus(msg)  { document.getElementById('statusMsg').textContent = msg; }
+
+function showResults() {
+  document.getElementById('emptyMsg').style.display  = 'none';
+  document.getElementById('tableWrap').style.display = '';
+  document.getElementById('statsRow').style.display  = 'grid';
+  document.getElementById('filterRow').style.display = 'flex';
+  document.getElementById('exportRow').style.display = 'flex';
+}
+
+function updateStats() {
+  var t = allData.length, tang=0, vals=0, mil=0, poe=0, aud=0;
+  allData.forEach(function(x) {
+    var g = (x.genero || '').toLowerCase();
+    if (g.indexOf('tango')   !== -1) tang++;
+    if (g.indexOf('vals')    !== -1) vals++;
+    if (g.indexOf('milonga') !== -1) mil++;
+    if (g.indexOf('poema')   !== -1) poe++;
+    if (x.audioId) aud++;
+  });
+  document.getElementById('sTot').textContent = t;
+  document.getElementById('sTan').textContent = tang;
+  document.getElementById('sVal').textContent = vals;
+  document.getElementById('sMil').textContent = mil;
+  document.getElementById('sPoe').textContent = poe;
+  document.getElementById('sAud').textContent = aud;
+  document.getElementById('sOtr').textContent = Math.max(0, t - tang - vals - mil - poe);
+}
+
+function addLog(type, msg) {
+  var log = document.getElementById('debugLog');
+  var el  = document.createElement('div');
+  el.className = 'log-line log-' + type;
+  el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+// Limpia basura JSON que puede venir del scraper (ej: 'D\'Arienzo",oga:...')
+function cleanFieldLocal(val) {
+  if (!val) return '';
+  var s = String(val);
+  var cuts = [s.indexOf('",'), s.indexOf("',"), s.indexOf('oga:'), s.indexOf('mp3:'), s.indexOf('http'), s.indexOf('{')];
+  var min = 9999;
+  for (var i = 0; i < cuts.length; i++) { if (cuts[i] > 0 && cuts[i] < min) min = cuts[i]; }
+  if (min < 9999) s = s.substring(0, min);
+  return s.replace(/["']+$/, '').trim();
+}
+
+function generatePublicIdLocal(orquesta, titulo, anio) {
+  var orqLimpia = cleanFieldLocal(orquesta || 'Desconocida');
+  var o  = cleanStringLocal(orqLimpia).substring(0, 25);
+  var t  = cleanStringLocal(titulo || 'Desconocido').substring(0, 35);
+  var a  = String(anio || '0000').replace(/\D/g, '').substring(0, 4);
+  return (o + '_' + t + '_' + a).replace(/[^a-zA-Z0-9_\-.]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
+function cleanStringLocal(str) {
+  if (!str) return 'Desconocido';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_')
+    .replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
+function bc(g) {
+  if (!g) return 'b-other';
+  var l = g.toLowerCase();
+  if (l.indexOf('tango')   !== -1) return 'b-tango';
+  if (l.indexOf('vals')    !== -1) return 'b-vals';
+  if (l.indexOf('milonga') !== -1) return 'b-milonga';
+  if (l.indexOf('poema')   !== -1) return 'b-poema';
+  return 'b-other';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+</script>
 </body>
 </html>
-
-HTML done
-Listo
