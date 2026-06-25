@@ -3,8 +3,8 @@
    Visualizaciones de audio · Gauges segmentados · Knob touch corregido
    ─────────────────────────────────────────────────────────────────────── */
 
-const GAS_URL        = 'https://script.google.com/macros/s/AKfycbw5NVX8ICStvL-jp4XvuA21SD0JOLYPoHWuDsalDGZh8bpmoMzuMcPquFxLrZihsdGj/exec';
-const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbxvoJEdKQRpFxGyV_umkuJEV9zr3Tp4D4CM8s1ZDH4VHH-fyz_ukcJFtXHtwX3FDrf96Q/exec';
+const GAS_URL        = 'https://script.google.com/macros/s/AKfycbyZ6i5i5r1QHtbBWj20KLY8AhQgfaqBQBh3G8ClB2Fy2eWL04hQOuqEIrOxAeLS2pSv/exec';
+const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
