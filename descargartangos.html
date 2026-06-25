@@ -48,7 +48,7 @@ button:disabled { opacity:.3;cursor:not-allowed; }
 .status { font-family:monospace;font-size:11px;color:var(--text2);min-height:14px; }
 .log { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius); padding:10px 12px;font-family:monospace;font-size:11px;color:var(--text2); max-height:200px;overflow-y:auto;margin-top:10px; }
 .log-line { padding:1px 0; }
-.log-ok { color:var(--green-text); } .log-err { color:var(--red-text); } .log-info { color:var(--gold); } .log-warn { color:#e0a040; } .log-blue { color:var(--blue-text); }
+.log-ok { color:var(--green-text); } .log-err { color:var(--red-text); } .log-info { color:var(--gold); } .log-warn { color:#e0a040; }
 .stats-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:1rem; }
 .stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px; }
 .stat .n { font-size:26px;color:var(--gold);line-height:1;margin-bottom:2px; }
@@ -65,50 +65,47 @@ tbody tr:hover td { background:var(--surface2); }
 tbody tr.processed td { opacity:.5; }
 tbody tr.processed td:first-child { opacity:1; }
 tbody tr.processing td { background:rgba(201,168,76,.08); }
-.col-sel { width:34px; } .col-titulo { width:22%; } .col-genero { width:8%; }
-.col-anio { width:6%; } .col-orquesta { width:14%; } .col-cantante { width:12%; }
-.col-duracion { width:7%; } .col-id { width:6%; } .col-oid { width:6%; }
-.col-status { width:8%;text-align:center; }
+.col-sel{width:34px}.col-titulo{width:22%}.col-genero{width:8%}.col-anio{width:6%}
+.col-orquesta{width:14%}.col-cantante{width:12%}.col-duracion{width:7%}
+.col-id{width:6%}.col-oid{width:6%}.col-status{width:8%;text-align:center}
 td a { color:var(--gold);text-decoration:none; }
 td a:hover { text-decoration:underline; }
 .badge { display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;font-family:monospace;letter-spacing:.04em;text-transform:uppercase;font-weight:700; }
-.b-tango { background:rgba(201,168,76,.12);color:var(--gold); border:1px solid rgba(201,168,76,.25); }
-.b-vals { background:rgba(94,160,150,.12);color:#5ea096; border:1px solid rgba(94,160,150,.25); }
-.b-milonga { background:rgba(160,120,60,.15);color:#c4895a; border:1px solid rgba(160,120,60,.25); }
-.b-poema { background:rgba(130,90,180,.12);color:#b07fd6; border:1px solid rgba(130,90,180,.25); }
-.b-audio { background:rgba(42,102,64,.15); color:var(--green-text);border:1px solid rgba(42,102,64,.25); }
-.b-other { background:var(--surface2);color:var(--text3); border:1px solid var(--border); }
-.status-badge { display:inline-block;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:4px; text-transform:uppercase;letter-spacing:.04em;font-weight:700; }
-.st-wait { background:rgba(255,255,255,.05);color:var(--text3); }
-.st-ready { background:rgba(58,90,138,.15);color:var(--blue-text); }
-.st-ok { background:rgba(42,102,64,.2);color:var(--green-text); }
-.st-err { background:rgba(139,26,42,.2);color:var(--red-text); }
-.st-skip { background:rgba(255,255,255,.05);color:var(--text3); }
-.pagination { display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--border);justify-content:center;font-family:monospace;font-size:11px;color:var(--text2); }
-.empty { text-align:center;padding:3rem 2rem;color:var(--text3);font-family:monospace;font-size:12px;line-height:2; }
-.empty-icon { font-size:36px;opacity:.25;margin-bottom:.5rem; }
-.export-row { display:flex;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap; }
-.export-row .info { font-family:monospace;font-size:11px;color:var(--text3);margin-right:auto; }
-input[type="checkbox"] { accent-color:var(--gold);width:14px;height:14px;cursor:pointer; }
-.config-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px; }
-.config-item { display:flex;flex-direction:column;gap:4px; }
-.config-item label { font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em; }
-.config-item input { width:100%; }
-.config-item .hint { font-size:10px;color:var(--text2);font-family:monospace; }
-.upload-panel { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:1rem; }
-.upload-item { display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border); }
-.upload-item:last-child { border-bottom:none; }
-.upload-name { flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.upload-status { font-family:monospace;font-size:10px; }
-footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-family:monospace;border-top:1px solid var(--border);margin-top:2rem;letter-spacing:.04em; }
-@media (max-width:640px) { main { padding:1rem; } .col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid { display:none; } }
+.b-tango{background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25)}
+.b-vals{background:rgba(94,160,150,.12);color:#5ea096;border:1px solid rgba(94,160,150,.25)}
+.b-milonga{background:rgba(160,120,60,.15);color:#c4895a;border:1px solid rgba(160,120,60,.25)}
+.b-poema{background:rgba(130,90,180,.12);color:#b07fd6;border:1px solid rgba(130,90,180,.25)}
+.b-other{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.status-badge{display:inline-block;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.st-wait{background:rgba(255,255,255,.05);color:var(--text3)}
+.st-ready{background:rgba(58,90,138,.15);color:var(--blue-text)}
+.st-ok{background:rgba(42,102,64,.2);color:var(--green-text)}
+.st-err{background:rgba(139,26,42,.2);color:var(--red-text)}
+.pagination{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--border);justify-content:center;font-family:monospace;font-size:11px;color:var(--text2)}
+.empty{text-align:center;padding:3rem 2rem;color:var(--text3);font-family:monospace;font-size:12px;line-height:2}
+.empty-icon{font-size:36px;opacity:.25;margin-bottom:.5rem}
+.export-row{display:flex;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.export-row .info{font-family:monospace;font-size:11px;color:var(--text3);margin-right:auto}
+input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:pointer}
+.config-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.config-item{display:flex;flex-direction:column;gap:4px}
+.config-item label{font-family:monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.config-item input{width:100%}
+.config-item .hint{font-size:10px;color:var(--text2);font-family:monospace}
+.upload-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:1rem}
+.upload-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.upload-item:last-child{border-bottom:none}
+.upload-name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upload-status{font-family:monospace;font-size:10px}
+footer{text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-family:monospace;border-top:1px solid var(--border);margin-top:2rem;letter-spacing:.04em}
+@media(max-width:640px){main{padding:1rem}.col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid{display:none}}
 </style>
 <base target="_blank">
 </head>
 <body>
 
 <header>
-  <div class="logo">☁</div>
+  <div class="logo">♪</div>
   <div>
     <h1>TodoTango Scraper</h1>
     <p>Scrapear · Subir audios · Registrar en Google Sheets</p>
@@ -117,11 +114,12 @@ footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-f
 
 <main>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('scrape')">Scraper</div>
-    <div class="tab" onclick="switchTab('upload')">Subir</div>
-    <div class="tab" onclick="switchTab('config')">Config</div>
+    <div class="tab active" data-tab="Scrape">Scraper</div>
+    <div class="tab" data-tab="Upload">Subir</div>
+    <div class="tab" data-tab="Config">Config</div>
   </div>
 
+  <!-- ════════════════════════════════ SCRAPER ════════════════════════════════ -->
   <div class="panel active" id="panelScrape">
     <div class="card">
       <div class="card-title">Extraccion de TodoTango</div>
@@ -148,8 +146,8 @@ footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-f
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:monospace;color:var(--text2);cursor:pointer;">
           <input type="checkbox" id="chkEnrich" checked> Extraer metadata completa
         </label>
-        <button class="btn-primary" id="btnScrape" onclick="startScrape()">Extraer</button>
-        <button class="btn-danger" id="btnStop" onclick="stopScrape()" style="display:none">Detener</button>
+        <button class="btn-primary" id="btnScrape">Extraer</button>
+        <button class="btn-danger" id="btnStop" style="display:none">Detener</button>
       </div>
       <div id="progressWrap" style="display:none;margin-top:10px">
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -169,34 +167,34 @@ footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-f
     </div>
 
     <div class="filter-row" id="filterRow" style="display:none">
-      <input type="text" id="filterText" placeholder="Buscar titulo, orquesta, cantante..." oninput="renderTable()">
-      <select id="filterGenero" onchange="renderTable()">
+      <input type="text" id="filterText" placeholder="Buscar titulo, orquesta, cantante...">
+      <select id="filterGenero">
         <option value="">Todos los generos</option>
         <option value="tango">Tango</option><option value="vals">Vals</option>
         <option value="milonga">Milonga</option><option value="poema">Poema</option>
         <option value="cancion">Cancion</option><option value="folklore">Folklore</option>
         <option value="foxtrot">Foxtrot</option>
       </select>
-      <select id="filterAudio" onchange="renderTable()">
+      <select id="filterAudio">
         <option value="">Con y sin audio</option>
         <option value="yes">Solo con audio</option>
         <option value="no">Solo sin audio</option>
       </select>
-      <select id="filterStatus" onchange="renderTable()">
+      <select id="filterStatus">
         <option value="">Todos los estados</option>
         <option value="ready">Listos para subir</option>
         <option value="uploaded">Ya subidos</option>
       </select>
-      <select id="sortBy" onchange="renderTable()">
+      <select id="sortBy">
         <option value="titulo">Titulo A-Z</option>
         <option value="anio">Ano</option>
         <option value="genero">Genero</option>
-        <option value="id">ID tema</option>
+        <option value="id">ID</option>
       </select>
-      <button onclick="selectAll(true)" style="font-size:11px">Todo</button>
-      <button onclick="selectAll(false)" style="font-size:11px">Ninguno</button>
-      <button onclick="selectAudioOnly()" style="font-size:11px;color:var(--green-text)">Solo con audio</button>
-      <button onclick="selectReadyOnly()" style="font-size:11px;color:var(--blue-text)">Listos</button>
+      <button id="btnSelTodo">Todo</button>
+      <button id="btnSelNada">Ninguno</button>
+      <button id="btnSelAudio" style="color:var(--green-text)">Solo audio</button>
+      <button id="btnSelReady" style="color:var(--blue-text)">Listos</button>
     </div>
 
     <div class="table-card">
@@ -209,7 +207,7 @@ footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-f
           <table>
             <thead>
               <tr>
-                <th class="col-sel"><input type="checkbox" id="chkAll" onchange="toggleAll(this.checked)"></th>
+                <th class="col-sel"><input type="checkbox" id="chkAll"></th>
                 <th class="col-titulo">Titulo</th>
                 <th class="col-genero">Genero</th>
                 <th class="col-anio">Ano</th>
@@ -225,338 +223,349 @@ footer { text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-f
           </table>
         </div>
         <div class="pagination" id="pagination" style="display:none">
-          <button onclick="changePage(-1)">Ant.</button>
+          <button id="btnPrevPage">Ant.</button>
           <span id="pageInfo"></span>
-          <button onclick="changePage(1)">Sig.</button>
+          <button id="btnNextPage">Sig.</button>
         </div>
       </div>
     </div>
 
     <div class="export-row" id="exportRow" style="display:none">
       <span class="info" id="exportInfo"></span>
-      <button onclick="exportCSV()">CSV</button>
-      <button onclick="exportJSON()">JSON</button>
-      <button class="btn-blue" onclick="switchToUpload()">Ir a Subir</button>
+      <button id="btnCsv">CSV</button>
+      <button id="btnJson">JSON</button>
+      <button class="btn-blue" id="btnGoUpload">Ir a Subir</button>
     </div>
   </div>
 
+  <!-- ════════════════════════════════ UPLOAD ════════════════════════════════ -->
   <div class="panel" id="panelUpload">
     <div class="card">
       <div class="card-title">Subir a Cloudinary + Google Sheets</div>
       <p style="font-size:12px;color:var(--text2);margin-bottom:1rem;">
-        Selecciona temas en el panel <strong>Scraper</strong> y ven aqui para subirlos.<br>
-        Cada tema se procesa: descarga OGG -> sube a Cloudinary (con ID descriptivo) -> registra en Sheets.
+        El audio se sube <strong>directamente</strong> a Cloudinary desde tu browser.<br>
+        Necesitas un <strong>upload preset unsigned</strong> en tu cuenta de Cloudinary.
       </p>
       <div class="row" style="margin-bottom:10px">
         <input type="number" id="uploadConcurrency" value="2" min="1" max="4" style="width:60px" title="Subidas simultaneas">
         <label style="font-size:11px;font-family:monospace;color:var(--text2)">simultaneas</label>
-        <button class="btn-primary" id="btnUpload" onclick="startUpload()">Subir seleccionados</button>
-        <button class="btn-danger" id="btnUploadStop" onclick="stopUpload()" style="display:none">Detener</button>
-        <button onclick="refreshSheetStatus()" style="font-size:11px">Actualizar estado</button>
+        <button class="btn-primary" id="btnUpload">Subir seleccionados</button>
+        <button class="btn-danger" id="btnUploadStop" style="display:none">Detener</button>
+        <button id="btnRefreshSheet">Actualizar estado</button>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill" style="width:0%"></div></div>
       <div class="status" id="uploadStatus"></div>
     </div>
 
     <div class="card" id="uploadQueueCard" style="display:none">
-      <div class="card-title">Cola de subida - <span id="uploadQueueInfo"></span></div>
+      <div class="card-title">Cola — <span id="uploadQueueInfo"></span></div>
       <div class="upload-panel" id="uploadGrid"></div>
     </div>
 
     <div class="card">
       <div class="card-title">Resumen de Google Sheets</div>
-      <div class="stats-row" id="sheetStats" style="display:grid">
+      <div class="stats-row" style="display:grid">
         <div class="stat"><div class="n" id="ssTotal">?</div><div class="l">En Sheets</div></div>
         <div class="stat"><div class="n" id="ssPending">?</div><div class="l">Pendientes</div></div>
         <div class="stat"><div class="n" id="ssSelected">0</div><div class="l">Seleccionados</div></div>
       </div>
-      <button onclick="refreshSheetStatus()" class="btn-blue" style="margin-top:8px">Verificar estado en Sheets</button>
     </div>
   </div>
 
+  <!-- ════════════════════════════════ CONFIG ════════════════════════════════ -->
   <div class="panel" id="panelConfig">
     <div class="card">
-      <div class="card-title">Configuracion de conexion</div>
+      <div class="card-title">Configuracion</div>
       <div class="config-grid">
         <div class="config-item">
           <label>URL del Apps Script</label>
-          <input type="text" id="cfgAppsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
-          <span class="hint">Tu proxy de Apps Script (doGet/doPost)</span>
+          <input type="text" id="cfgProxy" placeholder="https://script.google.com/macros/s/.../exec">
+          <span class="hint">URL de tu deployment publico</span>
         </div>
         <div class="config-item">
-          <label>ID de Google Sheet</label>
-          <input type="text" id="cfgSheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
-          <span class="hint">Entre /d/ y /edit en la URL de tu hoja</span>
+          <label>Cloudinary Cloud Name</label>
+          <input type="text" id="cfgCloudName" placeholder="dwgwbdtud">
+          <span class="hint">Nombre de tu cuenta en Cloudinary</span>
         </div>
         <div class="config-item">
-          <label>Nombre de la pestana</label>
-          <input type="text" id="cfgSheetName" placeholder="Hoja 1">
-          <span class="hint">Ej: Hoja 1, Base, Temas, etc.</span>
+          <label>Cloudinary Upload Preset (unsigned)</label>
+          <input type="text" id="cfgPreset" placeholder="dra_bruzera_unsigned">
+          <span class="hint">Debe ser tipo "unsigned" en tu Cloudinary</span>
         </div>
       </div>
       <div style="margin-top:12px">
-        <button class="btn-success" onclick="saveConfig()">Guardar configuracion</button>
-        <button onclick="testConnection()" style="margin-left:8px">Probar conexion</button>
+        <button class="btn-success" id="btnSaveConfig">Guardar</button>
+        <button id="btnTestConn" style="margin-left:8px">Probar conexion</button>
         <span id="configStatus" style="margin-left:12px;font-family:monospace;font-size:11px;color:var(--text2)"></span>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Instrucciones</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        <p><strong>1.</strong> Copia el archivo <code>Code.gs</code> en tu proyecto de Google Apps Script.</p>
-        <p><strong>2.</strong> Completa <code>SHEET_ID</code> y <code>SHEET_NAME</code> en el archivo.</p>
-        <p><strong>3.</strong> Guarda y haz <em>Deploy -> New deployment -> Web app</em>.</p>
-        <p><strong>4.</strong> Copia la URL del deployment y pegala aqui arriba.</p>
-        <p><strong>5.</strong> Haz clic en <em>Probar conexion</em> para verificar.</p>
-        <p><strong>6.</strong> Ve al panel <em>Scraper</em>, extrae temas, seleccionalos y subelos.</p>
+      <div class="card-title">Como configurar el Apps Script</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.9">
+        <p><strong>1.</strong> Copia <code>Code.gs</code> en un nuevo proyecto de Apps Script.</p>
+        <p><strong>2.</strong> Ajusta <code>SHEET_ID</code> y <code>SHEET_NAME</code> en el archivo.</p>
+        <p><strong>3.</strong> Deploy → <em>New deployment</em> → Web app → <strong>Execute as: Me</strong> → <strong>Who has access: Anyone</strong>.</p>
+        <p><strong>4.</strong> Copia la URL del deployment y pegala arriba.</p>
+        <p><strong>5.</strong> En Cloudinary: Settings → Upload → Add upload preset → <em>Unsigned</em>. Copia el nombre.</p>
+        <p><strong>6.</strong> Guarda la config, haz clic en "Probar conexion".</p>
       </div>
     </div>
   </div>
 </main>
 
-<footer>scraper no oficial - datos (c) todotango.com - uso personal</footer>
+<footer>scraper no oficial · datos (c) todotango.com · uso personal</footer>
 
 <script>
-
-// CONFIG
-const DEFAULT_PROXY = 'https://script.google.com/macros/s/AKfycbxIsEvw08ZJK92yiBZhOf0U4MlwdbH7ujlzl73fSnrRuCDeUFbDFvUbhCmAVZ-kmte5/exec';
-const CDN_OGG = 'https://sbits.us-sea-1.linodeobjects.com/todotango/ogg/';
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTES
+// ═══════════════════════════════════════════════════════════════
+const CDN_OGG  = 'https://sbits.us-sea-1.linodeobjects.com/todotango/ogg/';
 const ALPHABET = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','y','z'];
-const GENRE_SLUG = { '0':'todos','1':'Canci%25c3%25b3n','2':'Folklore','3':'Foxtrot','4':'Milonga','5':'Otros%2520ritmos','6':'Poema','7':'Tango','8':'Vals' };
-
-// ESTADO
-let allData = [];
-let selected = new Set();
-let currentPage = 1;
+const GENRE_SLUG = {
+  '0':'todos','1':'Canci%25c3%25b3n','2':'Folklore','3':'Foxtrot',
+  '4':'Milonga','5':'Otros%2520ritmos','6':'Poema','7':'Tango','8':'Vals'
+};
 const PAGE_SIZE = 50;
-let running = false;
-let abortFlag = false;
-let uploadRunning = false;
-let uploadAbort = false;
-let existingIds = new Set();
-let config = {
-  proxyUrl: localStorage.getItem('tt_proxyUrl') || DEFAULT_PROXY,
-  sheetId: localStorage.getItem('tt_sheetId') || '',
-  sheetName: localStorage.getItem('tt_sheetName') || ''
+
+// ═══════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════
+var allData     = [];
+var selected    = new Set();
+var currentPage = 1;
+var running     = false;
+var abortFlag   = false;
+var uploadRunning  = false;
+var uploadAbort    = false;
+var existingIds    = new Set();
+
+var cfg = {
+  proxyUrl:   localStorage.getItem('tt_proxy')     || '',
+  cloudName:  localStorage.getItem('tt_cldName')   || 'dwgwbdtud',
+  preset:     localStorage.getItem('tt_cldPreset') || 'dra_bruzera_unsigned'
 };
 
 // Cargar config en UI
-document.getElementById('cfgAppsScriptUrl').value = config.proxyUrl;
-document.getElementById('cfgSheetId').value = config.sheetId;
-document.getElementById('cfgSheetName').value = config.sheetName;
+document.getElementById('cfgProxy').value     = cfg.proxyUrl;
+document.getElementById('cfgCloudName').value = cfg.cloudName;
+document.getElementById('cfgPreset').value    = cfg.preset;
 
-// PROXY
-async function proxyFetch(url) {
-  const r = await fetch(config.proxyUrl + '?url=' + encodeURIComponent(url), { cache:'no-store' });
+// ═══════════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('panel' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'Upload') updateSheetStats();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnSaveConfig').addEventListener('click', function() {
+  cfg.proxyUrl  = document.getElementById('cfgProxy').value.trim();
+  cfg.cloudName = document.getElementById('cfgCloudName').value.trim();
+  cfg.preset    = document.getElementById('cfgPreset').value.trim();
+  localStorage.setItem('tt_proxy',     cfg.proxyUrl);
+  localStorage.setItem('tt_cldName',   cfg.cloudName);
+  localStorage.setItem('tt_cldPreset', cfg.preset);
+  showCfgStatus('Guardado');
+});
+
+document.getElementById('btnTestConn').addEventListener('click', async function() {
+  showCfgStatus('Probando...');
+  try {
+    var r = await fetch(cfg.proxyUrl + '?action=status');
+    var d = await r.json();
+    if (d.status === 'ok') {
+      showCfgStatus('OK v' + d.version + (d.sheetConnected ? ' — Sheets conectado' : ' — Sheets SIN configurar'));
+    } else {
+      showCfgStatus('Error: ' + (d.error || 'desconocido'));
+    }
+  } catch(e) {
+    showCfgStatus('Error: ' + e.message);
+  }
+});
+
+function showCfgStatus(msg) {
+  var el = document.getElementById('configStatus');
+  el.textContent = msg;
+  setTimeout(function() { el.textContent = ''; }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROXY HELPERS
+// ═══════════════════════════════════════════════════════════════
+async function proxyGet(url) {
+  var r = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(url), { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
-  const d = await r.json();
+  var d = await r.json();
   if (d.error) throw new Error(d.error);
   return d.contents || '';
 }
 
 async function proxyPost(action, payload) {
-  const body = JSON.stringify({ action: action, ...payload });
-  const r = await fetch(config.proxyUrl, {
+  var body = Object.assign({ action: action }, payload);
+  var r = await fetch(cfg.proxyUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: body
+    body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error('HTTP ' + r.status);
-  return await r.json();
+  return r.json();
 }
 
-// TABS
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-  event.currentTarget.classList.add('active');
-  document.getElementById('panel' + name[0].toUpperCase() + name.slice(1)).classList.add('active');
-}
-function switchToUpload() {
-  document.querySelectorAll('.tab')[1].click();
-  updateSheetStats();
-}
-
-// CONFIG
-function saveConfig() {
-  config.proxyUrl = document.getElementById('cfgAppsScriptUrl').value.trim();
-  config.sheetId = document.getElementById('cfgSheetId').value.trim();
-  config.sheetName = document.getElementById('cfgSheetName').value.trim();
-  localStorage.setItem('tt_proxyUrl', config.proxyUrl);
-  localStorage.setItem('tt_sheetId', config.sheetId);
-  localStorage.setItem('tt_sheetName', config.sheetName);
-  document.getElementById('configStatus').textContent = 'Guardado';
-  setTimeout(function() { document.getElementById('configStatus').textContent = ''; }, 2000);
-}
-
-async function testConnection() {
-  document.getElementById('configStatus').textContent = 'Probando...';
-  try {
-    const r = await fetch(config.proxyUrl + '?action=status');
-    const d = await r.json();
-    if (d.status === 'ok') {
-      let msg = 'Conectado (v' + d.version + ')';
-      if (d.sheetConnected) msg += ' - Sheets OK';
-      else msg += ' - Sheets NO configurado';
-      document.getElementById('configStatus').textContent = msg;
-    } else {
-      document.getElementById('configStatus').textContent = 'Error: ' + (d.error || 'desconocido');
-    }
-  } catch(e) {
-    document.getElementById('configStatus').textContent = 'Error: ' + e.message;
-  }
-}
-
-// FETCH LISTA DE TEMAS
+// ═══════════════════════════════════════════════════════════════
+//  SCRAPING
+// ═══════════════════════════════════════════════════════════════
 async function fetchLetter(letter, generoId) {
-  const genre = GENRE_SLUG[generoId] || 'todos';
-  const url = 'https://www.todotango.com/musica/obras/letras/' + letter + '/0/' + genre;
-  addLog('info', 'Fetching: ' + url);
+  var genre = GENRE_SLUG[generoId] || 'todos';
+  var url = 'https://www.todotango.com/musica/obras/letras/' + letter + '/0/' + genre;
+  addLog('info', 'GET ' + url);
 
-  let html;
-  try { html = await proxyFetch(url); }
-  catch(e) { addLog('err', 'Proxy error: ' + e.message); return []; }
+  var html;
+  try { html = await proxyGet(url); }
+  catch(e) { addLog('err', 'Error proxy: ' + e.message); return []; }
   if (!html) { addLog('err', 'Respuesta vacia'); return []; }
-  addLog('ok', 'HTML recibido: ' + html.length + ' chars');
+  addLog('ok', 'HTML: ' + html.length + ' chars');
 
-  const items = [];
-  const seen = new Set();
+  var items = [];
+  var seen  = new Set();
 
   // Patron 1: href con title="Titulo (Genero)"
-  const re1 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*title="([^"(]+)\(([^)]+)\)"/g;
-  let m;
+  var re1 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*title="([^"(]+)\(([^)]+)\)"/g;
+  var m;
   while ((m = re1.exec(html)) !== null) {
-    const id = parseInt(m[2]);
+    var id = parseInt(m[2], 10);
     if (!seen.has(id)) {
       seen.add(id);
-      items.push({ id: id, titulo: m[3].trim(), genero: m[4].trim(), url: m[1], musica: '', letra: '', anio: '', audioId: null, orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' });
+      items.push(makeItem(id, m[3].trim(), m[4].trim(), m[1]));
     }
   }
 
   // Patron 2: link seguido de (Genero)
   if (!items.length) {
-    const re2 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*>([^<]+)<\/a>[^(]*\(([^)]+)\)/g;
+    var re2 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/[^"]*?)"[^>]*>([^<]+)<\/a>[^(]*\(([^)]+)\)/g;
     while ((m = re2.exec(html)) !== null) {
-      const id = parseInt(m[2]);
-      if (!seen.has(id)) {
-        seen.add(id);
-        items.push({ id: id, titulo: m[3].trim(), genero: m[4].trim(), url: m[1], musica: '', letra: '', anio: '', audioId: null, orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' });
+      var id2 = parseInt(m[2], 10);
+      if (!seen.has(id2)) {
+        seen.add(id2);
+        items.push(makeItem(id2, m[3].trim(), m[4].trim(), m[1]));
       }
     }
   }
 
   // Patron 3: solo href
   if (!items.length) {
-    const re3 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/([^"\/]+)\/)"/g;
+    var re3 = /href="(https?:\/\/www\.todotango\.com\/musica\/tema\/(\d+)\/([^"\/]+)\/)"/g;
     while ((m = re3.exec(html)) !== null) {
-      const id = parseInt(m[2]);
-      if (!seen.has(id)) {
-        seen.add(id);
-        const titulo = decodeURIComponent(m[3].replace(/-/g,' ')).replace(/\w/g, function(c) { return c.toUpperCase(); });
-        items.push({ id: id, titulo: titulo, genero: '', url: m[1], musica: '', letra: '', anio: '', audioId: null, orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' });
+      var id3 = parseInt(m[2], 10);
+      if (!seen.has(id3)) {
+        seen.add(id3);
+        var titulo = decodeURIComponent(m[3].replace(/-/g, ' ')).replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        items.push(makeItem(id3, titulo, '', m[1]));
       }
     }
   }
 
-  addLog(items.length ? 'ok' : 'warn', 'Temas encontrados: ' + items.length);
-  if (!items.length) addLog('warn', 'HTML snippet: ' + html.slice(0,300).replace(/\s+/g,' '));
+  addLog(items.length ? 'ok' : 'warn', 'Encontrados: ' + items.length);
+  if (!items.length) addLog('warn', 'Snippet: ' + html.slice(0, 300).replace(/\s+/g, ' '));
   return items;
 }
 
-// ENRIQUECIMIENTO COMPLETO
+function makeItem(id, titulo, genero, url) {
+  return { id: id, titulo: titulo, genero: genero, url: url,
+    musica: '', letra: '', anio: '', audioId: null,
+    orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' };
+}
+
 async function enrichItem(item) {
-  let html;
-  try { html = await proxyFetch(item.url); }
+  var html;
+  try { html = await proxyGet(item.url); }
   catch(e) { return; }
   if (!html) return;
 
-  // ID de audio OGG
-  const audioPatterns = [
+  // Audio ID
+  var audioPatterns = [
     /sbits[^"'\s]*?\/(\d+)\.ogg/i,
     /todotango\/ogg\/(\d+)/i,
     /idsonido["'\s]*[:=]["'\s]*(\d+)/i,
     /soundid["'\s]*[:=]["'\s]*(\d+)/i,
-    /audioid["'\s]*[:=]["'\s]*(\d+)/i,
-    /data-id=["'](\d+)["'][^>]*(?:ogg|audio|sound|player)/i,
-    /(?:ogg|audio|sound|player)[^>]*data-id=["'](\d+)["']/i,
     /EscucharTema\s*\(\s*(\d+)/i,
     /PlayTema\s*\(\s*(\d+)/i,
-    /ReproducirTema\s*\(\s*(\d+)/i,
     /reproducir\s*\(\s*(\d+)/i,
-    /playAudio\s*\(\s*(\d+)/i,
-    /playerInit\s*\(\s*(\d+)/i,
-    /<input[^>]*(?:name|id)=["'][^"']*(?:sonido|audio|sound|ogg|idS)[^"']*["'][^>]*value=["'](\d+)["']/i,
-    /<input[^>]*value=["'](\d+)["'][^>]*(?:name|id)=["'][^"']*(?:sonido|audio|sound|ogg|idS)[^"']*["']/i,
-    /["']idSonido["']\s*:\s*(\d+)/i,
-    /["']audioFile["']\s*:\s*["'][^"']*?(\d+)\.ogg["']/i
+    /["']idSonido["']\s*:\s*(\d+)/i
   ];
-
-  for (let i = 0; i < audioPatterns.length; i++) {
-    const pat = audioPatterns[i];
-    const mm = html.match(pat);
-    if (mm && mm[1]) {
-      item.audioId = parseInt(mm[1]);
-      break;
-    }
+  for (var i = 0; i < audioPatterns.length; i++) {
+    var mm = html.match(audioPatterns[i]);
+    if (mm && mm[1]) { item.audioId = parseInt(mm[1], 10); break; }
   }
 
-  // Ano del tango (composicion)
-  const yearMatch = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
-  if (yearMatch) item.anio = yearMatch[1];
+  // Ano composicion
+  var ym = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
+  if (ym) item.anio = ym[1];
 
-  // Musico / Compositor
-  const musicaMatch = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i) || html.match(/M[uú]sica[^:]*:\s*<[^>]+>([^<]+)<\//i) || html.match(/M[uú]sica[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
-  if (musicaMatch) item.musica = musicaMatch[1].trim();
+  // Musica
+  var mm2 = html.match(/M[uú]sica[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
+            html.match(/M[uú]sica[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
+  if (mm2) item.musica = mm2[1].trim();
 
-  // Letrista
-  const letraMatch = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i) || html.match(/Letra[^:]*:\s*<[^>]+>([^<]+)<\//i) || html.match(/Letra[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
-  if (letraMatch) item.letra = letraMatch[1].trim();
+  // Letra
+  var lm = html.match(/Letra[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
+           html.match(/Letra[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
+  if (lm) item.letra = lm[1].trim();
 
   // Genero
   if (!item.genero) {
-    const gm = html.match(/class="[^"]*genero[^"]*"[^>]*>([^<]+)/i) || html.match(/<h[1-4][^>]*>\s*(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s*</i);
+    var gm = html.match(/<h[1-4][^>]*>\s*(Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s*</i);
     if (gm) item.genero = gm[1].trim();
   }
 
   // Orquesta
-  const orqMatch = html.match(/Orquesta\s+([^<
-]+?)(?:<|
-|$)/i) || html.match(/orquesta["'\s]*[:=]["'\s]*([^<
-"']{2,60}?)(?:<|
-|"|')/i);
-  if (orqMatch) item.orquesta = orqMatch[1].trim();
+  var om = html.match(/Orquesta\s+([^<\n]+?)(?:<|\n|$)/i);
+  if (om) item.orquesta = om[1].trim();
 
-  // Cantante / Instrumental
-  if (html.match(/instrumental/i)) {
+  // Cantante
+  if (/instrumental/i.test(html)) {
     item.cantante = 'Instrumental';
   } else {
-    const cantMatch = html.match(/(?:Cantor|Cantante|Voz)[^<]*<a[^>]+>([^<]+)<\/a>/i) || html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<
-]{2,60}?)(?:<|
-)/i);
-    if (cantMatch) item.cantante = cantMatch[1].trim();
+    var cm = html.match(/(?:Cantor|Cantante|Voz)[^<]*<a[^>]+>([^<]+)<\/a>/i) ||
+             html.match(/(?:Cantor|Cantante|Voz)[^:]*:\s*([^<\n]{2,60}?)(?:<|\n)/i);
+    if (cm) item.cantante = cm[1].trim();
   }
 
   // Duracion
-  const durMatch = html.match(/(\d{1,2})['\:](\d{2})["']?/);
-  if (durMatch) item.duracion = durMatch[1] + "'" + durMatch[2] + '"';
+  var dm = html.match(/(\d{1,2})[':'](\d{2})/);
+  if (dm) item.duracion = dm[1] + "'" + dm[2] + '"';
 
-  // Ano de grabacion
-  const grabMatch = html.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-  if (grabMatch) item.anioGrabacion = grabMatch[3];
+  // Ano grabacion
+  var gm2 = html.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (gm2) item.anioGrabacion = gm2[3];
   if (!item.anioGrabacion) {
-    const grabMatch2 = html.match(/(?:Buenos Aires|BA|grabado|recording)[^\d]*(\d{4})/i);
-    if (grabMatch2) item.anioGrabacion = grabMatch2[1];
+    var gm3 = html.match(/(?:Buenos Aires|grabado|recording)[^\d]*(\d{4})/i);
+    if (gm3) item.anioGrabacion = gm3[1];
   }
 }
 
-// ORCHESTRATION SCRAPE
+// ═══════════════════════════════════════════════════════════════
+//  SCRAPE PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnScrape').addEventListener('click', startScrape);
+document.getElementById('btnStop').addEventListener('click', function() {
+  abortFlag = true;
+  setStatus('Deteniendo...');
+  document.getElementById('btnStop').style.display = 'none';
+});
+
 async function startScrape() {
   if (running) return;
+  if (!cfg.proxyUrl) { alert('Primero configura la URL del Apps Script en Config.'); return; }
+
   running = true; abortFlag = false;
   allData = []; selected.clear(); currentPage = 1;
 
@@ -572,106 +581,122 @@ async function startScrape() {
   document.getElementById('emptyMsg').innerHTML = '<div class="empty-icon">&#9837;</div>Extrayendo...';
   setProgress(0);
 
-  const letraVal = document.getElementById('selLetra').value;
-  const generoId = document.getElementById('selGenero').value;
-  const letters = letraVal === 'ALL' ? ALPHABET : [letraVal];
+  var letraVal = document.getElementById('selLetra').value;
+  var generoId = document.getElementById('selGenero').value;
+  var letters  = letraVal === 'ALL' ? ALPHABET : [letraVal];
 
-  for (let li = 0; li < letters.length; li++) {
+  for (var li = 0; li < letters.length; li++) {
     if (abortFlag) break;
     setStatus('Letra "' + letters[li].toUpperCase() + '" (' + (li+1) + '/' + letters.length + ')');
-    const items = await fetchLetter(letters[li], generoId);
-    allData.push(...items);
+    var items = await fetchLetter(letters[li], generoId);
+    allData.push.apply(allData, items);
     if (allData.length) showResults();
     renderTable(); updateStats();
-    setProgress(Math.round((li+1)/letters.length * 55));
+    setProgress(Math.round((li+1) / letters.length * 50));
     if (letters.length > 1) await sleep(600);
   }
 
   showResults(); renderTable(); updateStats();
 
   if (document.getElementById('chkEnrich').checked && allData.length) {
-    setStatus(allData.length + ' temas. Extrayendo metadata completa...');
-    for (let i = 0; i < allData.length; i++) {
+    setStatus(allData.length + ' temas. Extrayendo metadata...');
+    for (var i = 0; i < allData.length; i++) {
       if (abortFlag) break;
       await enrichItem(allData[i]);
-      setProgress(55 + Math.round((i+1)/allData.length * 43));
-      if (i % 3 === 0) { renderTable(); updateStats(); }
-      await sleep(350);
+      setProgress(50 + Math.round((i+1) / allData.length * 45));
+      if (i % 5 === 0) { renderTable(); updateStats(); }
+      await sleep(300);
     }
   }
 
   await refreshSheetStatus();
   renderTable(); updateStats();
   setProgress(100);
-  const conAudio = allData.filter(function(x) { return x.audioId; }).length;
-  const conOrquesta = allData.filter(function(x) { return x.orquesta; }).length;
-  setStatus('Listo: ' + allData.length + ' temas - ' + conAudio + ' con audio - ' + conOrquesta + ' con orquesta.');
+  var conAudio = allData.filter(function(x) { return x.audioId; }).length;
+  setStatus('Listo: ' + allData.length + ' temas, ' + conAudio + ' con audio.');
   document.getElementById('btnScrape').disabled = false;
   document.getElementById('btnStop').style.display = 'none';
   running = false;
 }
 
-function stopScrape() {
-  abortFlag = true;
-  setStatus('Deteniendo...');
-  document.getElementById('btnStop').style.display = 'none';
-}
+// ═══════════════════════════════════════════════════════════════
+//  TABLA Y FILTROS
+// ═══════════════════════════════════════════════════════════════
+['filterText','filterGenero','filterAudio','filterStatus','sortBy'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', renderTable);
+});
+document.getElementById('filterText').addEventListener('input', renderTable);
 
-// TABLA
+document.getElementById('chkAll').addEventListener('change', function() {
+  getFiltered().forEach(function(x) {
+    if (this.checked) selected.add(x.id); else selected.delete(x.id);
+  }.bind(this));
+  renderTable();
+});
+
+document.getElementById('btnSelTodo').addEventListener('click', function()  { allData.forEach(function(x) { selected.add(x.id); });    renderTable(); });
+document.getElementById('btnSelNada').addEventListener('click', function()  { allData.forEach(function(x) { selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnSelAudio').addEventListener('click', function() { allData.forEach(function(x) { if (x.audioId) selected.add(x.id); else selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnSelReady').addEventListener('click', function() { allData.forEach(function(x) { if (x.audioId && x.status !== 'uploaded') selected.add(x.id); else selected.delete(x.id); }); renderTable(); });
+document.getElementById('btnPrevPage').addEventListener('click', function() { changePage(-1); });
+document.getElementById('btnNextPage').addEventListener('click', function() { changePage(1); });
+document.getElementById('btnCsv').addEventListener('click',  exportCSV);
+document.getElementById('btnJson').addEventListener('click', exportJSON);
+document.getElementById('btnGoUpload').addEventListener('click', function() {
+  document.querySelectorAll('.tab')[1].click();
+});
+
 function getFiltered() {
-  const txt = (document.getElementById('filterText').value || '').toLowerCase();
-  const gen = (document.getElementById('filterGenero').value || '').toLowerCase();
-  const audio = document.getElementById('filterAudio').value;
-  const statusFilter = document.getElementById('filterStatus').value;
-  const sort = document.getElementById('sortBy').value;
+  var txt    = (document.getElementById('filterText').value || '').toLowerCase();
+  var gen    = (document.getElementById('filterGenero').value || '').toLowerCase();
+  var audio  = document.getElementById('filterAudio').value;
+  var stFlt  = document.getElementById('filterStatus').value;
+  var sort   = document.getElementById('sortBy').value;
 
-  let data = allData.filter(function(x) {
-    const mt = !txt || x.titulo.toLowerCase().includes(txt) || (x.orquesta || '').toLowerCase().includes(txt) || (x.cantante || '').toLowerCase().includes(txt) || (x.musica || '').toLowerCase().includes(txt);
-    const mg = !gen || (x.genero || '').toLowerCase().includes(gen);
-    const ma = !audio || (audio === 'yes' ? x.audioId : !x.audioId);
-    const ms = !statusFilter || (statusFilter === 'ready' ? (x.audioId && x.status !== 'uploaded') : statusFilter === 'uploaded' ? x.status === 'uploaded' : true);
+  var data = allData.filter(function(x) {
+    var mt = !txt  || [x.titulo, x.orquesta, x.cantante, x.musica].join(' ').toLowerCase().indexOf(txt) !== -1;
+    var mg = !gen  || (x.genero || '').toLowerCase().indexOf(gen) !== -1;
+    var ma = !audio || (audio === 'yes' ? !!x.audioId : !x.audioId);
+    var ms = !stFlt ||
+      (stFlt === 'ready'    ? (x.audioId && x.status !== 'uploaded') :
+       stFlt === 'uploaded' ? x.status === 'uploaded' : true);
     return mt && mg && ma && ms;
   });
 
   data.sort(function(a, b) {
     if (sort === 'titulo') return a.titulo.localeCompare(b.titulo, 'es');
-    if (sort === 'anio') return (parseInt(a.anio) || 9999) - (parseInt(b.anio) || 9999);
+    if (sort === 'anio')   return (parseInt(a.anio, 10) || 9999) - (parseInt(b.anio, 10) || 9999);
     if (sort === 'genero') return (a.genero || '').localeCompare(b.genero || '', 'es');
-    if (sort === 'id') return a.id - b.id;
+    if (sort === 'id')     return a.id - b.id;
     return 0;
   });
   return data;
 }
 
 function renderTable() {
-  const filtered = getFiltered();
-  const total = filtered.length;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  var filtered = getFiltered();
+  var total    = filtered.length;
+  var pages    = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (currentPage > pages) currentPage = 1;
-  const slice = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  var slice = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  let html = '';
-  for (let i = 0; i < slice.length; i++) {
-    const x = slice[i];
-    const hasAudio = x.audioId != null;
-    const isUploaded = x.status === 'uploaded';
-    const isProcessing = x.status === 'processing';
-    let rowClass = '';
-    if (isUploaded) rowClass = 'processed';
-    else if (isProcessing) rowClass = 'processing';
+  var html = '';
+  for (var i = 0; i < slice.length; i++) {
+    var x = slice[i];
+    var hasAudio    = x.audioId != null;
+    var isUploaded  = x.status === 'uploaded';
+    var isProcessing = x.status === 'processing';
+    var rowClass    = isUploaded ? 'processed' : isProcessing ? 'processing' : '';
 
-    let statusBadge = '';
-    if (isUploaded) {
-      statusBadge = '<span class="status-badge st-ok">OK</span>';
-    } else if (hasAudio) {
-      statusBadge = '<span class="status-badge st-ready">Listo</span>';
-    } else {
-      statusBadge = '<span class="status-badge st-wait">Sin audio</span>';
-    }
+    var badge = isUploaded ? '<span class="status-badge st-ok">OK</span>' :
+                hasAudio   ? '<span class="status-badge st-ready">Listo</span>' :
+                             '<span class="status-badge st-wait">Sin audio</span>';
 
     html += '<tr class="' + rowClass + '">' +
-      '<td class="col-sel"><input type="checkbox" data-id="' + x.id + '" ' + (selected.has(x.id) ? 'checked' : '') + ' onchange="toggleSel(' + x.id + ',this.checked)" ' + (isUploaded ? 'disabled' : '') + '></td>' +
-      '<td class="col-titulo" title="' + esc(x.titulo) + '"><a href="' + x.url + '" target="_blank">' + esc(x.titulo) + '</a></td>' +
+      '<td class="col-sel"><input type="checkbox" data-id="' + x.id + '"' +
+        (selected.has(x.id) ? ' checked' : '') +
+        (isUploaded ? ' disabled' : '') + '></td>' +
+      '<td class="col-titulo" title="' + esc(x.titulo) + '"><a href="' + x.url + '">' + esc(x.titulo) + '</a></td>' +
       '<td class="col-genero"><span class="badge ' + bc(x.genero) + '">' + esc(x.genero || '-') + '</span></td>' +
       '<td class="col-anio">' + (x.anio || '-') + '</td>' +
       '<td class="col-orquesta" title="' + esc(x.orquesta) + '">' + esc(x.orquesta || x.musica || '-') + '</td>' +
@@ -679,51 +704,63 @@ function renderTable() {
       '<td class="col-duracion">' + (x.duracion || '-') + '</td>' +
       '<td class="col-id" style="color:var(--text3)">' + x.id + '</td>' +
       '<td class="col-oid" style="color:' + (x.audioId ? 'var(--green-text)' : 'var(--text3)') + '">' + (x.audioId || '-') + '</td>' +
-      '<td class="col-status">' + statusBadge + '</td>' +
+      '<td class="col-status">' + badge + '</td>' +
       '</tr>';
   }
 
   document.getElementById('tbody').innerHTML = html;
-  document.getElementById('pageInfo').textContent = 'Pag ' + currentPage + '/' + pages + ' - ' + total + ' resultados';
+
+  // Delegar eventos de checkbox en tbody
+  document.getElementById('tbody').querySelectorAll('input[type="checkbox"]').forEach(function(chk) {
+    chk.addEventListener('change', function() {
+      var id = parseInt(this.dataset.id, 10);
+      if (this.checked) selected.add(id); else selected.delete(id);
+      renderTable();
+    });
+  });
+
+  document.getElementById('pageInfo').textContent = 'Pag ' + currentPage + '/' + pages + ' — ' + total + ' resultados';
   document.getElementById('pagination').style.display = total > PAGE_SIZE ? 'flex' : 'none';
-  document.getElementById('exportInfo').textContent = selected.size + ' sel - ' + total + ' filtrados - ' + allData.length + ' total';
-  const chkAll = document.getElementById('chkAll');
+  document.getElementById('exportInfo').textContent = selected.size + ' sel · ' + total + ' filtrados · ' + allData.length + ' total';
+
+  var chkAll = document.getElementById('chkAll');
   chkAll.indeterminate = selected.size > 0 && selected.size < allData.length;
   chkAll.checked = selected.size > 0 && selected.size === allData.length;
+
   updateSheetStats();
 }
 
-function toggleSel(id, on) { if (on) selected.add(id); else selected.delete(id); renderTable(); }
-function toggleAll(on) { getFiltered().forEach(function(x) { if (on) selected.add(x.id); else selected.delete(x.id); }); renderTable(); }
-function selectAll(on) { allData.forEach(function(x) { if (on) selected.add(x.id); else selected.delete(x.id); }); renderTable(); }
-function selectAudioOnly() { allData.forEach(function(x) { if (x.audioId) selected.add(x.id); else selected.delete(x.id); }); renderTable(); }
-function selectReadyOnly() { allData.forEach(function(x) { if (x.audioId && x.status !== 'uploaded') selected.add(x.id); else selected.delete(x.id); }); renderTable(); }
-
 function changePage(dir) {
-  const pages = Math.ceil(getFiltered().length / PAGE_SIZE);
+  var pages = Math.ceil(getFiltered().length / PAGE_SIZE);
   currentPage = Math.max(1, Math.min(pages, currentPage + dir));
   renderTable();
 }
 
-// UPLOAD A CLOUDINARY + SHEETS
+// ═══════════════════════════════════════════════════════════════
+//  UPLOAD — Cloudinary directo desde browser + Sheets via proxy
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btnUpload').addEventListener('click',     startUpload);
+document.getElementById('btnUploadStop').addEventListener('click', function() {
+  uploadAbort = true;
+  document.getElementById('uploadStatus').textContent = 'Deteniendo...';
+  document.getElementById('btnUploadStop').style.display = 'none';
+});
+document.getElementById('btnRefreshSheet').addEventListener('click', refreshSheetStatus);
+
 async function startUpload() {
   if (uploadRunning) return;
+  if (!cfg.proxyUrl)  { alert('Configura la URL del Apps Script.'); return; }
+  if (!cfg.cloudName) { alert('Configura el Cloud Name de Cloudinary.'); return; }
+  if (!cfg.preset)    { alert('Configura el Upload Preset de Cloudinary.'); return; }
 
-  if (!config.proxyUrl || config.proxyUrl.indexOf('________________________________') !== -1) {
-    alert('Primero configura la URL del Apps Script en el panel Config.');
-    return;
-  }
-
-  const itemsToUpload = [];
-  const selArray = Array.from(selected);
-  for (let i = 0; i < selArray.length; i++) {
-    const id = selArray[i];
-    const x = allData.find(function(d) { return d.id === id; });
+  var itemsToUpload = [];
+  selected.forEach(function(id) {
+    var x = allData.find(function(d) { return d.id === id; });
     if (x && x.audioId && x.status !== 'uploaded') itemsToUpload.push(x);
-  }
+  });
 
   if (!itemsToUpload.length) {
-    alert('No hay temas seleccionados listos para subir. Asegurate de: 1) Extraer temas del scraper 2) Seleccionar los que tienen audio 3) Que no esten ya subidos');
+    alert('No hay temas listos para subir seleccionados.\n\nAsegurate de:\n1. Haber extraido temas\n2. Seleccionar temas con audio (columna OGG en verde)\n3. Que no esten ya subidos');
     return;
   }
 
@@ -732,72 +769,85 @@ async function startUpload() {
   document.getElementById('btnUploadStop').style.display = '';
   document.getElementById('uploadQueueCard').style.display = '';
 
-  const concurrency = Math.max(1, Math.min(4, parseInt(document.getElementById('uploadConcurrency').value) || 2));
-  let done = 0;
-  const total = itemsToUpload.length;
+  var concurrency = Math.max(1, Math.min(4, parseInt(document.getElementById('uploadConcurrency').value, 10) || 2));
+  var total = itemsToUpload.length;
+  var done  = 0;
 
-  let gridHtml = '';
-  for (let i = 0; i < itemsToUpload.length; i++) {
-    const x = itemsToUpload[i];
+  // Construir cola visual
+  var gridHtml = '';
+  for (var i = 0; i < itemsToUpload.length; i++) {
+    var x = itemsToUpload[i];
     gridHtml += '<div class="upload-item" id="uitem-' + i + '">' +
-      '<span class="upload-name">' + esc(x.titulo) + ' - ' + esc(x.orquesta || x.musica || '?') + '</span>' +
+      '<span class="upload-name">' + esc(x.titulo) + ' — ' + esc(x.orquesta || x.musica || '?') + '</span>' +
       '<span class="upload-status" id="ustatus-' + i + '">En cola</span>' +
       '</div>';
   }
   document.getElementById('uploadGrid').innerHTML = gridHtml;
+  document.getElementById('uploadStatus').textContent = 'Subiendo ' + total + ' temas...';
 
-  document.getElementById('uploadStatus').textContent = 'Subiendo ' + total + ' temas (' + concurrency + ' simultaneos)...';
+  var qIdx = 0;
 
-  let qIdx = 0;
   async function worker() {
     while (qIdx < itemsToUpload.length && !uploadAbort) {
-      const idx = qIdx++;
-      const item = itemsToUpload[idx];
+      var idx  = qIdx++;
+      var item = itemsToUpload[idx];
 
       item.status = 'processing';
-      document.getElementById('ustatus-' + idx).textContent = 'Subiendo...';
-      document.getElementById('ustatus-' + idx).style.color = 'var(--gold)';
+      setUStatus(idx, 'Subiendo...', 'var(--gold)');
       renderTable();
 
       try {
-        const result = await proxyPost('processTrack', { track: item });
+        // 1) Descargar OGG via proxy (necesario por CORS del CDN)
+        var oggUrl = CDN_OGG + item.audioId + '.ogg';
+        var oggResp = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(oggUrl), { cache: 'no-store' });
+        if (!oggResp.ok) throw new Error('No se pudo descargar el OGG (HTTP ' + oggResp.status + ')');
 
-        if (result.success) {
-          item.status = 'uploaded';
-          item.cloudinaryUrl = result.cloudinaryUrl;
-          item.publicId = result.publicId;
-          document.getElementById('ustatus-' + idx).textContent = 'OK';
-          document.getElementById('ustatus-' + idx).style.color = 'var(--green-text)';
-          addLog('ok', 'Subido: ' + item.titulo + ' -> ' + result.publicId);
-        } else {
-          item.status = 'wait';
-          document.getElementById('ustatus-' + idx).textContent = 'Error: ' + (result.error || 'Error');
-          document.getElementById('ustatus-' + idx).style.color = 'var(--red-text)';
-          addLog('err', 'Error subiendo ' + item.titulo + ': ' + result.error);
-        }
+        // El proxy devuelve JSON con contents = texto. Para binarios usamos el blob directamente
+        // En realidad el Apps Script devuelve texto. Para audio necesitamos fetch directo al CDN.
+        // NOTA: el CDN de linodeobjects probablemente tenga CORS abierto (Content-Delivery).
+        // Si no, el proxy necesita devolver base64. Ver nota abajo.
+        var audioBlob = await fetchAudioBlob(oggUrl);
+
+        // 2) Subir a Cloudinary directamente
+        var publicId = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
+        var cdnUrl   = await uploadToCloudinary(audioBlob, publicId);
+
+        item.publicId      = publicId;
+        item.cloudinaryUrl = cdnUrl;
+
+        // 3) Registrar en Sheets via proxy
+        var sheetResult = await proxyPost('writeToSheet', {
+          track: item, cloudinaryUrl: cdnUrl, publicId: publicId
+        });
+
+        if (sheetResult.error) throw new Error('Sheets: ' + sheetResult.error);
+
+        item.status = 'uploaded';
+        setUStatus(idx, 'OK ✓', 'var(--green-text)');
+        addLog('ok', 'Subido: ' + item.titulo + ' → ' + publicId);
 
       } catch(e) {
         item.status = 'wait';
-        document.getElementById('ustatus-' + idx).textContent = 'Error: ' + e.message;
-        document.getElementById('ustatus-' + idx).style.color = 'var(--red-text)';
-        addLog('err', 'Error de red ' + item.titulo + ': ' + e.message);
+        setUStatus(idx, 'Error: ' + e.message.slice(0, 60), 'var(--red-text)');
+        addLog('err', item.titulo + ': ' + e.message);
       }
 
       done++;
       document.getElementById('uploadProgressFill').style.width = Math.round(done / total * 100) + '%';
-      document.getElementById('uploadQueueInfo').textContent = done + '/' + total;
-      document.getElementById('uploadStatus').textContent = done + '/' + total + ' procesados';
+      document.getElementById('uploadQueueInfo').textContent    = done + '/' + total;
+      document.getElementById('uploadStatus').textContent       = done + '/' + total + ' procesados';
       renderTable();
-      await sleep(200);
+      await sleep(150);
     }
   }
 
-  const pool = [];
-  for (let i = 0; i < concurrency; i++) pool.push(worker());
+  // Pool de workers
+  var pool = [];
+  for (var w = 0; w < concurrency; w++) pool.push(worker());
   await Promise.all(pool);
 
-  const ok = itemsToUpload.filter(function(x) { return x.status === 'uploaded'; }).length;
-  const err = total - ok;
+  var ok  = itemsToUpload.filter(function(x) { return x.status === 'uploaded'; }).length;
+  var err = total - ok;
   document.getElementById('uploadStatus').textContent = 'Listo: ' + ok + ' subidos' + (err ? ', ' + err + ' errores' : '');
   document.getElementById('btnUpload').disabled = false;
   document.getElementById('btnUploadStop').style.display = 'none';
@@ -806,174 +856,190 @@ async function startUpload() {
   await refreshSheetStatus();
 }
 
-function stopUpload() {
-  uploadAbort = true;
-  document.getElementById('uploadStatus').textContent = 'Deteniendo...';
-  document.getElementById('btnUploadStop').style.display = 'none';
+function setUStatus(idx, msg, color) {
+  var el = document.getElementById('ustatus-' + idx);
+  if (el) { el.textContent = msg; el.style.color = color; }
 }
 
-// VERIFICAR ESTADO EN SHEETS
-async function refreshSheetStatus() {
-  if (!config.proxyUrl || config.proxyUrl.indexOf('________________________________') !== -1) return;
-
+/* ─── Descargar audio (intenta directo primero, luego via proxy base64) ─── */
+async function fetchAudioBlob(url) {
+  // Intento 1: fetch directo (funciona si el CDN tiene CORS abierto)
   try {
-    document.getElementById('uploadStatus').textContent = 'Verificando estado en Sheets...';
-    const result = await proxyPost('getExistingIds', {});
+    var r = await fetch(url);
+    if (r.ok) return await r.blob();
+  } catch(e) { /* CORS bloqueado, intento 2 */ }
 
+  // Intento 2: pedir al proxy que devuelva base64
+  // El Apps Script necesita el endpoint ?url=...&b64=1
+  // y devolver { base64: "...", mimeType: "audio/ogg" }
+  var r2 = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(url) + '&b64=1', { cache: 'no-store' });
+  if (!r2.ok) throw new Error('Proxy no pudo descargar el audio');
+  var d2 = await r2.json();
+  if (d2.error) throw new Error(d2.error);
+  if (!d2.base64) throw new Error('Proxy no devolvio base64');
+
+  var byteStr  = atob(d2.base64);
+  var arr      = new Uint8Array(byteStr.length);
+  for (var i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+  return new Blob([arr], { type: d2.mimeType || 'audio/ogg' });
+}
+
+/* ─── Subir blob a Cloudinary (unsigned) ─── */
+async function uploadToCloudinary(blob, publicId) {
+  var form = new FormData();
+  form.append('file',            blob, publicId + '.ogg');
+  form.append('upload_preset',   cfg.preset);
+  form.append('public_id',       publicId);
+  form.append('resource_type',   'raw');
+
+  var r = await fetch('https://api.cloudinary.com/v1_1/' + cfg.cloudName + '/raw/upload', {
+    method: 'POST',
+    body: form
+  });
+  var d = await r.json();
+  if (d.error) throw new Error('Cloudinary: ' + d.error.message);
+  return d.secure_url;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHEETS STATUS
+// ═══════════════════════════════════════════════════════════════
+async function refreshSheetStatus() {
+  if (!cfg.proxyUrl) return;
+  try {
+    document.getElementById('uploadStatus').textContent = 'Verificando Sheets...';
+    var result = await proxyPost('getExistingIds', {});
     if (result.ids) {
       existingIds = new Set(result.ids);
-
-      for (let i = 0; i < allData.length; i++) {
-        const item = allData[i];
-        const publicId = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
-        if (existingIds.has(publicId)) {
-          item.status = 'uploaded';
-        }
-      }
-
+      allData.forEach(function(item) {
+        var pid = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
+        if (existingIds.has(pid)) item.status = 'uploaded';
+      });
       renderTable();
       updateSheetStats();
       document.getElementById('uploadStatus').textContent = existingIds.size + ' temas ya en Sheets';
     }
   } catch(e) {
-    document.getElementById('uploadStatus').textContent = 'No se pudo verificar Sheets: ' + e.message;
+    document.getElementById('uploadStatus').textContent = 'No se pudo verificar: ' + e.message;
   }
-}
-
-function generatePublicIdLocal(orquesta, titulo, anio) {
-  let o = cleanStringLocal(orquesta || 'Desconocida').replace(/_/g, '').substring(0, 25);
-  let t = cleanStringLocal(titulo || 'Desconocido').replace(/_/g, '').substring(0, 35);
-  let a = String(anio || '0000').replace(/\D/g, '');
-  let id = o + '_' + t + '_' + a;
-  id = id.replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-  return id;
-}
-
-function cleanStringLocal(str) {
-  if (!str) return 'Desconocido';
-  return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 
 function updateSheetStats() {
-  let ready = 0;
-  for (let i = 0; i < allData.length; i++) {
-    if (allData[i].audioId && allData[i].status !== 'uploaded') ready++;
-  }
-  let uploaded = 0;
-  for (let i = 0; i < allData.length; i++) {
-    if (allData[i].status === 'uploaded') uploaded++;
-  }
-  let sel = 0;
-  const selArray = Array.from(selected);
-  for (let i = 0; i < selArray.length; i++) {
-    const x = allData.find(function(d) { return d.id === selArray[i]; });
+  var ready    = allData.filter(function(x) { return x.audioId && x.status !== 'uploaded'; }).length;
+  var uploaded = allData.filter(function(x) { return x.status === 'uploaded'; }).length;
+  var sel = 0;
+  selected.forEach(function(id) {
+    var x = allData.find(function(d) { return d.id === id; });
     if (x && x.audioId && x.status !== 'uploaded') sel++;
-  }
-
-  document.getElementById('ssTotal').textContent = existingIds.size || '?';
-  document.getElementById('ssPending').textContent = ready;
+  });
+  document.getElementById('ssTotal').textContent    = existingIds.size || uploaded || '?';
+  document.getElementById('ssPending').textContent  = ready;
   document.getElementById('ssSelected').textContent = sel;
 }
 
-// EXPORT
+// ═══════════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════════
 function exportCSV() {
-  const data = getFiltered();
-  const rows = [];
-  rows.push(['ID Tema','Titulo','Genero','Ano composicion','Ano grabacion','Orquesta','Cantante','Duracion','Musica','Letra','ID Audio OGG','URL Audio','URL Pagina','Estado','Public ID','URL Cloudinary']);
-  for (let i = 0; i < data.length; i++) {
-    const x = data[i];
-    rows.push([
-      x.id, x.titulo, x.genero, x.anio || '', x.anioGrabacion || '', x.orquesta || '', x.cantante || '', x.duracion || '',
-      x.musica || '', x.letra || '', x.audioId || '', x.audioId ? CDN_OGG + x.audioId + '.ogg' : '', x.url,
-      x.status || 'wait', x.publicId || '', x.cloudinaryUrl || ''
-    ]);
-  }
-  let csv = '';
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    let line = '';
-    for (let j = 0; j < r.length; j++) {
-      if (j > 0) line += ',';
-      line += '"' + String(r[j] || '').replace(/"/g, '""') + '"';
-    }
-    csv += line + '
-';
-  }
-  dlFile(csv, 'todotango_completo.csv', 'text/csv;charset=utf-8;');
+  var data = getFiltered();
+  var rows = [['ID','Titulo','Genero','Anio composicion','Anio grabacion','Orquesta','Cantante','Duracion','Musica','Letra','ID Audio OGG','URL Audio','URL Pagina','Estado','Public ID','URL Cloudinary']];
+  data.forEach(function(x) {
+    rows.push([x.id, x.titulo, x.genero, x.anio||'', x.anioGrabacion||'', x.orquesta||'', x.cantante||'', x.duracion||'',
+      x.musica||'', x.letra||'', x.audioId||'', x.audioId ? CDN_OGG+x.audioId+'.ogg' : '', x.url,
+      x.status||'wait', x.publicId||'', x.cloudinaryUrl||'']);
+  });
+  var csv = rows.map(function(r) {
+    return r.map(function(v) { return '"' + String(v).replace(/"/g,'""') + '"'; }).join(',');
+  }).join('\n');
+  dlFile(csv, 'todotango.csv', 'text/csv;charset=utf-8;');
 }
 
 function exportJSON() {
-  const data = getFiltered();
-  const out = [];
-  for (let i = 0; i < data.length; i++) {
-    const x = data[i];
-    out.push({
-      id: x.id, titulo: x.titulo, genero: x.genero, anio: x.anio, anioGrabacion: x.anioGrabacion,
-      orquesta: x.orquesta, cantante: x.cantante, duracion: x.duracion, musica: x.musica, letra: x.letra,
-      audioId: x.audioId, audioUrl: x.audioId ? CDN_OGG + x.audioId + '.ogg' : null,
-      url: x.url, status: x.status || 'wait', publicId: x.publicId || '', cloudinaryUrl: x.cloudinaryUrl || ''
-    });
-  }
-  dlFile(JSON.stringify(out, null, 2), 'todotango_completo.json', 'application/json');
+  var out = getFiltered().map(function(x) {
+    return { id:x.id, titulo:x.titulo, genero:x.genero, anio:x.anio, anioGrabacion:x.anioGrabacion,
+      orquesta:x.orquesta, cantante:x.cantante, duracion:x.duracion, musica:x.musica, letra:x.letra,
+      audioId:x.audioId, audioUrl: x.audioId ? CDN_OGG+x.audioId+'.ogg' : null,
+      url:x.url, status:x.status||'wait', publicId:x.publicId||'', cloudinaryUrl:x.cloudinaryUrl||'' };
+  });
+  dlFile(JSON.stringify(out, null, 2), 'todotango.json', 'application/json');
 }
 
 function dlFile(content, name, mime) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿' + content], { type: mime }));
-  a.download = name;
-  a.click();
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + content], { type: mime }));
+  a.download = name; a.click();
 }
 
-// HELPERS
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
 function setProgress(p) { document.getElementById('progressFill').style.width = p + '%'; }
-function setStatus(msg) { document.getElementById('statusMsg').textContent = msg; }
+function setStatus(msg)  { document.getElementById('statusMsg').textContent = msg; }
+
 function showResults() {
-  document.getElementById('emptyMsg').style.display = 'none';
+  document.getElementById('emptyMsg').style.display  = 'none';
   document.getElementById('tableWrap').style.display = '';
-  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('statsRow').style.display  = 'grid';
   document.getElementById('filterRow').style.display = 'flex';
   document.getElementById('exportRow').style.display = 'flex';
 }
+
 function updateStats() {
-  const t = allData.length;
-  let tang = 0, vals = 0, mil = 0, poe = 0, aud = 0;
-  for (let i = 0; i < allData.length; i++) {
-    const g = (allData[i].genero || '').toLowerCase();
-    if (g.indexOf('tango') !== -1) tang++;
-    if (g.indexOf('vals') !== -1) vals++;
+  var t = allData.length, tang=0, vals=0, mil=0, poe=0, aud=0;
+  allData.forEach(function(x) {
+    var g = (x.genero || '').toLowerCase();
+    if (g.indexOf('tango')   !== -1) tang++;
+    if (g.indexOf('vals')    !== -1) vals++;
     if (g.indexOf('milonga') !== -1) mil++;
-    if (g.indexOf('poema') !== -1) poe++;
-    if (allData[i].audioId) aud++;
-  }
-  const otr = Math.max(0, t - tang - vals - mil - poe);
+    if (g.indexOf('poema')   !== -1) poe++;
+    if (x.audioId) aud++;
+  });
   document.getElementById('sTot').textContent = t;
   document.getElementById('sTan').textContent = tang;
   document.getElementById('sVal').textContent = vals;
   document.getElementById('sMil').textContent = mil;
   document.getElementById('sPoe').textContent = poe;
   document.getElementById('sAud').textContent = aud;
-  document.getElementById('sOtr').textContent = otr;
+  document.getElementById('sOtr').textContent = Math.max(0, t - tang - vals - mil - poe);
 }
+
 function addLog(type, msg) {
-  const log = document.getElementById('debugLog');
-  const el = document.createElement('div');
+  var log = document.getElementById('debugLog');
+  var el  = document.createElement('div');
   el.className = 'log-line log-' + type;
   el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
 }
+
+function generatePublicIdLocal(orquesta, titulo, anio) {
+  var o  = cleanStringLocal(orquesta || 'Desconocida').substring(0, 25);
+  var t  = cleanStringLocal(titulo   || 'Desconocido').substring(0, 35);
+  var a  = String(anio || '0000').replace(/\D/g, '');
+  return (o + '_' + t + '_' + a).replace(/[^a-zA-Z0-9_\-.]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
+function cleanStringLocal(str) {
+  if (!str) return 'Desconocido';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_')
+    .replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
 function bc(g) {
   if (!g) return 'b-other';
-  const l = g.toLowerCase();
-  if (l.indexOf('tango') !== -1) return 'b-tango';
-  if (l.indexOf('vals') !== -1) return 'b-vals';
+  var l = g.toLowerCase();
+  if (l.indexOf('tango')   !== -1) return 'b-tango';
+  if (l.indexOf('vals')    !== -1) return 'b-vals';
   if (l.indexOf('milonga') !== -1) return 'b-milonga';
-  if (l.indexOf('poema') !== -1) return 'b-poema';
+  if (l.indexOf('poema')   !== -1) return 'b-poema';
   return 'b-other';
 }
+
 function esc(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 </script>
 </body>
