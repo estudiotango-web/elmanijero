@@ -65,8 +65,8 @@ tbody tr:hover td { background:var(--surface2); }
 tbody tr.processed td { opacity:.5; }
 tbody tr.processed td:first-child { opacity:1; }
 tbody tr.processing td { background:rgba(201,168,76,.08); }
-.col-sel{width:34px}.col-titulo{width:22%}.col-genero{width:8%}.col-anio{width:6%}
-.col-orquesta{width:14%}.col-cantante{width:12%}.col-duracion{width:7%}
+.col-sel{width:34px}.col-titulo{width:20%}.col-genero{width:7%}.col-estilo{width:7%}.col-anio{width:6%}
+.col-orquesta{width:14%}.col-cantante{width:11%}.col-duracion{width:6%}
 .col-id{width:6%}.col-oid{width:6%}.col-status{width:8%;text-align:center}
 td a { color:var(--gold);text-decoration:none; }
 td a:hover { text-decoration:underline; }
@@ -98,7 +98,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .upload-name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .upload-status{font-family:monospace;font-size:10px}
 footer{text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-family:monospace;border-top:1px solid var(--border);margin-top:2rem;letter-spacing:.04em}
-@media(max-width:640px){main{padding:1rem}.col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid{display:none}}
+@media(max-width:640px){main{padding:1rem}.col-orquesta,.col-cantante,.col-duracion,.col-id,.col-oid,.col-estilo{display:none}}
 </style>
 <base target="_blank">
 </head>
@@ -210,6 +210,7 @@ footer{text-align:center;padding:2rem;font-size:10px;color:var(--text3);font-fam
                 <th class="col-sel"><input type="checkbox" id="chkAll"></th>
                 <th class="col-titulo">Titulo</th>
                 <th class="col-genero">Genero</th>
+                <th class="col-estilo">Estilo</th>
                 <th class="col-anio">Ano</th>
                 <th class="col-orquesta">Orquesta</th>
                 <th class="col-cantante">Cantante</th>
@@ -482,7 +483,7 @@ async function fetchLetter(letter, generoId) {
 function makeItem(id, titulo, genero, url) {
   return { id: id, titulo: titulo, genero: genero, url: url,
     musica: '', letra: '', anio: '', audioId: null,
-    orquesta: '', cantante: '', duracion: '', anioGrabacion: '', status: 'wait' };
+    orquesta: '', cantante: '', duracion: '', anioGrabacion: '', estilo: '', status: 'wait' };
 }
 
 // Extrae texto limpio de una etiqueta HTML — elimina todo el HTML interno
@@ -493,11 +494,9 @@ function tagText(html, tag) {
 
 // Extrae el primer texto de un <a> dentro de un bloque que contiene 'label'
 function labeledLink(html, label) {
-  // Busca: <td ...>label</td><td ...><a ...>VALOR</a>
   var re = new RegExp(label + '[\\s\\S]{0,200}?<a[^>]+>([^<]{2,80})<\/a>', 'i');
   var m = html.match(re);
   if (m) return m[1].trim();
-  // Fallback: label: VALOR (sin link)
   var re2 = new RegExp(label + '[^:]*:\\s*<[^>]+>([^<]{2,80})<', 'i');
   var m2 = html.match(re2);
   return m2 ? m2[1].trim() : '';
@@ -510,8 +509,6 @@ async function enrichItem(item) {
   if (!html) return;
 
   // ── Audio ID ──
-  // TodoTango guarda el id en un objeto JS tipo: {oga:"https://.../ogg/1738.ogg",...}
-  // Tomamos solo el numero del path, no todo el string del objeto
   var audioPatterns = [
     /["']?oga["']?\s*:\s*["'][^"']*?\/ogg\/(\d+)\.ogg/i,
     /sbits\.us[^"'\s]*?\/(\d+)\.ogg/i,
@@ -525,22 +522,46 @@ async function enrichItem(item) {
     if (mm && mm[1]) { item.audioId = parseInt(mm[1], 10); break; }
   }
 
-  // ── Orquesta — buscar dentro de estructura de tabla de TodoTango ──
-  // La página tiene celdas tipo: <td class="...">Orquesta</td><td ...><a href="...">D'Arienzo</a>
-  var orqVal = labeledLink(html, 'Orquesta');
-  if (orqVal && orqVal.length < 60) item.orquesta = orqVal;
+  // ── Texto plano del HTML — la pagina de un tema NO tiene un campo
+  //    "Orquesta:" con link. Tiene una lista de versiones grabadas con el
+  //    formato "Canta NOMBRE / Orquesta NOMBRE  DD-M-YYYY ...". Por eso
+  //    buscamos orquesta/cantante ahi y no con labeledLink (que terminaba
+  //    agarrando el link de navegacion "El Baile" del menu superior). ──
+  var plainText = html.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                       .replace(/<[^>]+>/g, ' ')
+                       .replace(/&nbsp;/g, ' ')
+                       .replace(/\s+/g, ' ');
 
-  // ── Cantante ──
-  if (/instrumental/i.test(html)) {
+  // Version cantada: "Canta X / Orquesta Y   DD-M-YYYY"
+  var verMatch = plainText.match(/Canta\s+([^\/]{2,60}?)\s*\/\s*Orquesta\s+([^\d]{2,60}?)\s+\d{1,2}-\d{1,2}-\d{4}/i);
+  // Version instrumental: "Orquesta Y   DD-M-YYYY" (sin "Canta" antes)
+  var instrMatch = plainText.match(/Orquesta\s+([^\d]{2,60}?)\s+\d{1,2}-\d{1,2}-\d{4}/i);
+  // Version solo voz/guitarras, sin orquesta: "Canta X Con guitarras  DD-M-YYYY"
+  var soloMatch = plainText.match(/Canta\s+([^\/]{2,60}?)\s+Con\s+guitarras?\s+\d{1,2}-\d{1,2}-\d{4}/i);
+
+  if (verMatch) {
+    item.cantante = verMatch[1].trim();
+    item.orquesta = verMatch[2].trim();
+    item.estilo   = 'Cantado';
+  } else if (soloMatch) {
+    item.cantante = soloMatch[1].trim();
+    item.orquesta = '';
+    item.estilo   = 'Cantado';
+  } else if (instrMatch) {
+    item.orquesta = instrMatch[1].trim();
+    item.cantante = '';
+    item.estilo   = 'Instrumental';
+  } else if (/instrumental/i.test(html)) {
     item.cantante = 'Instrumental';
-  } else {
-    var cantVal = labeledLink(html, 'Cantor') ||
-                  labeledLink(html, 'Cantante') ||
-                  labeledLink(html, 'Voz');
-    if (cantVal && cantVal.length < 60) item.cantante = cantVal;
+    item.estilo   = 'Instrumental';
   }
 
-  // ── Compositor / Música ──
+  // Fecha de grabacion real (de esa misma version detectada arriba)
+  var fechaMatch = plainText.match(/\d{1,2}-\d{1,2}-(\d{4})/);
+  if (fechaMatch) item.anioGrabacion = fechaMatch[1];
+
+  // ── Compositor / Música — esto SI es un campo real con link inmediato ──
   var musicaVal = labeledLink(html, 'M\\u00fasica') ||
                   labeledLink(html, 'Musica') ||
                   labeledLink(html, 'Música');
@@ -556,15 +577,9 @@ async function enrichItem(item) {
     if (gm) item.genero = gm[1];
   }
 
-  // ── Año composición ──
-  // Buscar patrón "Tango 1929" o similar cercano al género
+  // ── Año composición — patron "Tango 1929" cerca del titulo ──
   var anioCompMatch = html.match(/(?:Tango|Vals|Milonga|Canci[oó]n|Foxtrot|Poema|Folklore)\s+(\d{4})/i);
   if (anioCompMatch) item.anio = anioCompMatch[1];
-
-  // ── Año grabación — buscar fecha DD/MM/YYYY o YYYY cerca de "grabaci" ──
-  var anioGrabMatch = html.match(/grabaci[oó]n[^\d]{0,30}(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/i) ||
-                      html.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
-  if (anioGrabMatch) item.anioGrabacion = anioGrabMatch[3];
 
   // ── Duración — buscar M:SS o M'SS en el HTML ──
   var durMatch = html.match(/(\d{1,2})[':](\d{2})(?:[""]|(?!\d))/);
@@ -717,6 +732,7 @@ function renderTable() {
         (isUploaded ? ' disabled' : '') + '></td>' +
       '<td class="col-titulo" title="' + esc(x.titulo) + '"><a href="' + x.url + '">' + esc(x.titulo) + '</a></td>' +
       '<td class="col-genero"><span class="badge ' + bc(x.genero) + '">' + esc(x.genero || '-') + '</span></td>' +
+      '<td class="col-estilo">' + esc(x.estilo || '-') + '</td>' +
       '<td class="col-anio">' + (x.anio || '-') + '</td>' +
       '<td class="col-orquesta" title="' + esc(x.orquesta) + '">' + esc(x.orquesta || x.musica || '-') + '</td>' +
       '<td class="col-cantante" title="' + esc(x.cantante) + '">' + esc(x.cantante || '-') + '</td>' +
@@ -729,7 +745,6 @@ function renderTable() {
 
   document.getElementById('tbody').innerHTML = html;
 
-  // Delegar eventos de checkbox en tbody
   document.getElementById('tbody').querySelectorAll('input[type="checkbox"]').forEach(function(chk) {
     chk.addEventListener('change', function() {
       var id = parseInt(this.dataset.id, 10);
@@ -792,7 +807,6 @@ async function startUpload() {
   var total = itemsToUpload.length;
   var done  = 0;
 
-  // Construir cola visual
   var gridHtml = '';
   for (var i = 0; i < itemsToUpload.length; i++) {
     var x = itemsToUpload[i];
@@ -816,29 +830,18 @@ async function startUpload() {
       renderTable();
 
       try {
-        // 1) Descargar OGG via proxy (necesario por CORS del CDN)
         var oggUrl = CDN_OGG + item.audioId + '.ogg';
-        var oggResp = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(oggUrl), { cache: 'no-store' });
-        if (!oggResp.ok) throw new Error('No se pudo descargar el OGG (HTTP ' + oggResp.status + ')');
-
-        // El proxy devuelve JSON con contents = texto. Para binarios usamos el blob directamente
-        // En realidad el Apps Script devuelve texto. Para audio necesitamos fetch directo al CDN.
-        // NOTA: el CDN de linodeobjects probablemente tenga CORS abierto (Content-Delivery).
-        // Si no, el proxy necesita devolver base64. Ver nota abajo.
         var audioBlob = await fetchAudioBlob(oggUrl);
 
-        // 2) Subir a Cloudinary directamente
         var publicId = generatePublicIdLocal(item.orquesta || item.musica, item.titulo, item.anioGrabacion || item.anio);
         var cdnUrl   = await uploadToCloudinary(audioBlob, publicId);
 
         item.publicId      = publicId;
         item.cloudinaryUrl = cdnUrl;
 
-        // 3) Registrar en Sheets via proxy
-        // Solo mandamos los campos necesarios para no superar el limite de URL (~2000 chars)
         var trackMin = {
           id: item.id, titulo: item.titulo, orquesta: item.orquesta, musica: item.musica,
-          cantante: item.cantante, genero: item.genero, anio: item.anio,
+          cantante: item.cantante, genero: item.genero, anio: item.anio, estilo: item.estilo,
           anioGrabacion: item.anioGrabacion, duracion: item.duracion, audioId: item.audioId
         };
         var sheetResult = await proxyAction('write', {
@@ -866,7 +869,6 @@ async function startUpload() {
     }
   }
 
-  // Pool de workers
   var pool = [];
   for (var w = 0; w < concurrency; w++) pool.push(worker());
   await Promise.all(pool);
@@ -888,15 +890,11 @@ function setUStatus(idx, msg, color) {
 
 /* ─── Descargar audio (intenta directo primero, luego via proxy base64) ─── */
 async function fetchAudioBlob(url) {
-  // Intento 1: fetch directo (funciona si el CDN tiene CORS abierto)
   try {
     var r = await fetch(url);
     if (r.ok) return await r.blob();
   } catch(e) { /* CORS bloqueado, intento 2 */ }
 
-  // Intento 2: pedir al proxy que devuelva base64
-  // El Apps Script necesita el endpoint ?url=...&b64=1
-  // y devolver { base64: "...", mimeType: "audio/ogg" }
   var r2 = await fetch(cfg.proxyUrl + '?url=' + encodeURIComponent(url) + '&b64=1', { cache: 'no-store' });
   if (!r2.ok) throw new Error('Proxy no pudo descargar el audio');
   var d2 = await r2.json();
@@ -967,9 +965,9 @@ function updateSheetStats() {
 // ═══════════════════════════════════════════════════════════════
 function exportCSV() {
   var data = getFiltered();
-  var rows = [['ID','Titulo','Genero','Anio composicion','Anio grabacion','Orquesta','Cantante','Duracion','Musica','Letra','ID Audio OGG','URL Audio','URL Pagina','Estado','Public ID','URL Cloudinary']];
+  var rows = [['ID','Titulo','Genero','Estilo','Anio composicion','Anio grabacion','Orquesta','Cantante','Duracion','Musica','Letra','ID Audio OGG','URL Audio','URL Pagina','Estado','Public ID','URL Cloudinary']];
   data.forEach(function(x) {
-    rows.push([x.id, x.titulo, x.genero, x.anio||'', x.anioGrabacion||'', x.orquesta||'', x.cantante||'', x.duracion||'',
+    rows.push([x.id, x.titulo, x.genero, x.estilo||'', x.anio||'', x.anioGrabacion||'', x.orquesta||'', x.cantante||'', x.duracion||'',
       x.musica||'', x.letra||'', x.audioId||'', x.audioId ? CDN_OGG+x.audioId+'.ogg' : '', x.url,
       x.status||'wait', x.publicId||'', x.cloudinaryUrl||'']);
   });
@@ -981,7 +979,7 @@ function exportCSV() {
 
 function exportJSON() {
   var out = getFiltered().map(function(x) {
-    return { id:x.id, titulo:x.titulo, genero:x.genero, anio:x.anio, anioGrabacion:x.anioGrabacion,
+    return { id:x.id, titulo:x.titulo, genero:x.genero, estilo:x.estilo, anio:x.anio, anioGrabacion:x.anioGrabacion,
       orquesta:x.orquesta, cantante:x.cantante, duracion:x.duracion, musica:x.musica, letra:x.letra,
       audioId:x.audioId, audioUrl: x.audioId ? CDN_OGG+x.audioId+'.ogg' : null,
       url:x.url, status:x.status||'wait', publicId:x.publicId||'', cloudinaryUrl:x.cloudinaryUrl||'' };
