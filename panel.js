@@ -1,4 +1,4 @@
-/* El Manijero · panel.js v1.4
+/* El Manijero · panel.js v1.5
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
@@ -17,9 +17,10 @@ const ABANDONO_VENTANA_MIN = 5;
 let biblioteca    = [];
 let indexActual   = 0;
 let estadoPanel   = 'idle';
-let progressTimer = null;
-let cortinaTimer  = null;
-let pollingTimer  = null;
+let progressTimer        = null;
+let cortinaTimer         = null;
+let cortinaProgressTimer = null;   // interval de progreso de cortina
+let pollingTimer         = null;
 
 let historialPista    = [];
 let pistaPollingTimer = null;
@@ -596,21 +597,7 @@ function reproducirTema(index) {
   actualizarContadorTemas();
 
   if (esCortina(tema)) {
-    if (tema.AudioURL) {
-      // Cortina con audio propio: se reproduce y avanza sola al terminar
-      reproducirConAudioEl(tema);
-    } else {
-      // Cortina sin audio: timer de 45s y visualización activa
-      startAudioSimulation();
-      activarRing(true);
-      // Capturamos el genId actual para que si el usuario pulsa Stop
-      // antes de los 45s, el setTimeout no avance al siguiente tema.
-      var genAlIniciar = audioGenId;
-      cortinaTimer = setTimeout(function() {
-        if (audioGenId !== genAlIniciar) return;  // fue detenida/reemplazada
-        avanzarTema();
-      }, CORTINA_DURACION_SEG * 1000);
-    }
+    reproducirCortina(tema);
     return;
   }
 
@@ -621,6 +608,114 @@ function reproducirTema(index) {
     console.warn('Tema sin AudioURL — saltando:', tema.Titulo);
     setTimeout(avanzarTema, 800);
   }
+}
+
+// ── Cortina: timer 45s + fade in 2s + fade out 4s ─────────────────────────
+function reproducirCortina(tema) {
+  var FADE_IN_SEG  = 2;
+  var FADE_OUT_SEG = 4;
+  var duracion     = CORTINA_DURACION_SEG; // 45s totales
+
+  startAudioSimulation();
+  activarRing(true);
+
+  // Barra de progreso de la cortina (basada en timer, no en el audio)
+  var timerProgress = 0;
+  cortinaProgressTimer = setInterval(function() {
+    timerProgress++;
+    var pct = Math.min((timerProgress / duracion) * 100, 100);
+    var pf  = document.getElementById('progress-fill');
+    if (pf) pf.style.width = pct.toFixed(1) + '%';
+    var cur = timerProgress;
+    setEl('time-current', Math.floor(cur / 60) + ':' + (cur % 60).toString().padStart(2, '0'));
+    var rest = duracion - cur;
+    setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
+  }, 1000);
+
+  setEl('time-total', '0:' + duracion);
+
+  var genAlIniciar = audioGenId;
+
+  // Limpia el interval de progreso de cortina
+  function limpiarCortina() {
+    if (cortinaProgressTimer) { clearInterval(cortinaProgressTimer); cortinaProgressTimer = null; }
+  }
+
+  if (!tema.AudioURL) {
+    // Sin audio — solo timer
+    cortinaTimer = setTimeout(function() {
+      if (audioGenId !== genAlIniciar) { limpiarCortina(); return; }
+      limpiarCortina();
+      avanzarTema();
+    }, duracion * 1000);
+    return;
+  }
+
+  // Con audio Cloudinary — manejamos el volumen manualmente
+  var el         = new Audio();
+  el.crossOrigin = 'anonymous';
+  el.src         = tema.AudioURL;
+  el.volume      = 0;           // empieza en 0 para el fade in
+  el.preload     = 'auto';
+  el.loop        = true;        // loopea por si la cortina dura más que el clip
+  audioEl        = el;
+  var miGenId    = ++audioGenId;
+
+  // Actualizar genAlIniciar con el nuevo valor post-incremento
+  genAlIniciar = miGenId;
+
+  el.addEventListener('canplaythrough', function onReady() {
+    el.removeEventListener('canplaythrough', onReady);
+    if (audioGenId !== miGenId) return;
+
+    el.play().catch(function(err) {
+      console.warn('Error reproduciendo cortina:', err);
+    });
+
+    var volObj  = knobValue / 100; // volumen objetivo según knob
+    var PASOS   = 20;              // intervalos por segundo de fade
+
+    // ── FADE IN: 2 segundos ──────────────────────────────────────────────
+    var fadeInCount    = 0;
+    var fadeInTotal    = FADE_IN_SEG * PASOS;
+    var fadeInInterval = setInterval(function() {
+      if (audioGenId !== miGenId) { clearInterval(fadeInInterval); return; }
+      fadeInCount++;
+      el.volume = Math.min(volObj * (fadeInCount / fadeInTotal), volObj);
+      if (fadeInCount >= fadeInTotal) clearInterval(fadeInInterval);
+    }, 1000 / PASOS);
+
+    // ── TIMER PRINCIPAL: corte a los 45s ─────────────────────────────────
+    cortinaTimer = setTimeout(function() {
+      if (audioGenId !== miGenId) { limpiarCortina(); return; }
+
+      // ── FADE OUT: 4 segundos antes de avanzar ────────────────────────
+      var volInicio      = el.volume;
+      var fadeOutCount   = 0;
+      var fadeOutTotal   = FADE_OUT_SEG * PASOS;
+      var fadeOutInterval = setInterval(function() {
+        if (audioGenId !== miGenId) { clearInterval(fadeOutInterval); limpiarCortina(); return; }
+        fadeOutCount++;
+        el.volume = Math.max(volInicio * (1 - fadeOutCount / fadeOutTotal), 0);
+        if (fadeOutCount >= fadeOutTotal) {
+          clearInterval(fadeOutInterval);
+          limpiarCortina();
+          // Detener el audio de cortina limpiamente
+          el.pause();
+          el.src = '';
+          audioEl = null;
+          audioGenId++;
+          avanzarTema();
+        }
+      }, 1000 / PASOS);
+
+    }, duracion * 1000);
+  }, { once: true });
+
+  el.addEventListener('error', function() {
+    if (audioGenId !== miGenId) return;
+    console.warn('Error en audio de cortina — avanzando por timer');
+  });
 }
 
 // ── avanzarTema — avanza sin importar el estado interno ───────────────────
@@ -664,7 +759,7 @@ function renderBibliotecaCargada() {
     badge.innerHTML = '<div class="live-dot" style="background:#c9a84c;box-shadow:none"></div><span> ' + info + '</span>';
   }
   setEl('badge-temas', biblioteca.length + ' temas');
-  setEl('badge-sub',   conAudio > 0 ? conAudio + ' con audio Cloudinary' : 'Biblioteca cargada');
+  setEl('badge-sub',   conAudio > 0 ? conAudio + ' temas con audio' : 'Biblioteca cargada');
 }
 
 function renderTemaActual(tema, index) {
@@ -683,7 +778,7 @@ function renderTemaActual(tema, index) {
   if (tema.Energia) html += '<span class="chip ch-gold">Energía ' + String(tema.Energia).toLowerCase() + '</span>';
   if (!esCortina(tema)) {
     if (tema.Calidad) html += '<span class="chip ch-cortina">Calidad: ' + tema.Calidad + '</span>';
-    html += '<span class="chip ch-green">☁ Cloudinary</span>';
+    html += '<span class="chip ch-green">✓ Audio HD</span>';
   }
 
   var chips = document.getElementById('now-chips');
@@ -792,8 +887,9 @@ function resetProgressUI() {
 }
 
 function detenerTimers() {
-  if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-  if (cortinaTimer)  { clearTimeout(cortinaTimer);   cortinaTimer  = null; }
+  if (progressTimer)        { clearInterval(progressTimer);        progressTimer        = null; }
+  if (cortinaTimer)         { clearTimeout(cortinaTimer);          cortinaTimer         = null; }
+  if (cortinaProgressTimer) { clearInterval(cortinaProgressTimer); cortinaProgressTimer = null; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -926,4 +1022,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.4 · Cloudinary audio · fixes: playlist completa + cortinas + timer · ¡A bailar!');
+console.log('El Manijero panel v1.5 · cortina: timer fijo 45s + fade in 2s + fade out 4s · ¡A bailar!');
