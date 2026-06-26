@@ -1,4 +1,4 @@
-/* El Manijero · panel.js v1.3
+/* El Manijero · panel.js v1.4
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
@@ -28,7 +28,10 @@ let energiaHistory = [];
 const MAX_ENERGIA_HISTORY = 60;
 
 // ── Audio nativo (Cloudinary) ──────────────────────────────────────────────
-let audioEl = null;
+let audioEl      = null;
+let audioGenId   = 0;   // ← ID de generación: cada nueva instancia tiene el suyo.
+                         //   Los callbacks comprueban que siguen siendo "dueños"
+                         //   del audioEl actual antes de actuar.
 
 // ══════════════════════════════════════════════════════════════════════════
 // AUDIO — Cloudinary
@@ -37,49 +40,66 @@ let audioEl = null;
 function reproducirConAudioEl(tema) {
   detenerAudio();
 
-  audioEl             = new Audio();
-  audioEl.crossOrigin = 'anonymous';
-  audioEl.src         = tema.AudioURL;
-  audioEl.volume      = knobValue / 100;
-  audioEl.preload     = 'auto';
+  // Cada llamada recibe un ID único. Los listeners lo capturan por closure
+  // y lo comparan con audioGenId antes de actuar — así los listeners de
+  // instancias viejas (ya destruidas) no pueden disparar avanzarTema ni
+  // actualizar la UI del tema nuevo.
+  var miGenId = ++audioGenId;
 
-  audioEl.addEventListener('canplaythrough', function onReady() {
-    audioEl.removeEventListener('canplaythrough', onReady);
-    audioEl.play().catch(function(err) {
+  var el             = new Audio();
+  el.crossOrigin     = 'anonymous';
+  el.src             = tema.AudioURL;
+  el.volume          = knobValue / 100;
+  el.preload         = 'auto';
+  audioEl            = el;
+
+  // Duración: se muestra en cuanto llega loadedmetadata (puede ser antes
+  // o después de canplaythrough, por eso no reseteamos time-total en '—').
+  el.addEventListener('loadedmetadata', function() {
+    if (audioGenId !== miGenId) return;
+    var tot = Math.floor(el.duration);
+    setEl('time-total', Math.floor(tot / 60) + ':' + (tot % 60).toString().padStart(2, '0'));
+  });
+
+  el.addEventListener('canplaythrough', function onReady() {
+    el.removeEventListener('canplaythrough', onReady);
+    if (audioGenId !== miGenId) return;   // instancia ya reemplazada
+    el.play().catch(function(err) {
+      if (audioGenId !== miGenId) return;
       console.warn('Error al reproducir audio de Cloudinary:', err);
       avanzarTema();
     });
-    iniciarProgressAudio();
+    // Resetear barra pero NO time-total (ya lo puso loadedmetadata)
+    var pf = document.getElementById('progress-fill');
+    if (pf) pf.style.width = '0%';
+    setEl('time-current', '0:00');
     startAudioSimulation();
     activarRing(true);
   }, { once: true });
 
-  audioEl.addEventListener('ended', avanzarTema);
-
-  audioEl.addEventListener('error', function() {
-    console.warn('Error cargando audio desde Cloudinary — avanzando al siguiente:', tema.Titulo, tema.AudioURL);
+  // ended: avanza SOLO si esta instancia sigue siendo la activa
+  el.addEventListener('ended', function() {
+    if (audioGenId !== miGenId) return;
     avanzarTema();
   });
 
-  // Progreso real via timeupdate
-  audioEl.addEventListener('timeupdate', function() {
-    if (!audioEl || !audioEl.duration) return;
-    var pct  = (audioEl.currentTime / audioEl.duration) * 100;
-    var pf   = document.getElementById('progress-fill');
-    if (pf) pf.style.width = pct.toFixed(1) + '%';
-    var cur  = Math.floor(audioEl.currentTime);
-    setEl('time-current',
-      Math.floor(cur / 60) + ':' + (cur % 60).toString().padStart(2, '0'));
-    var rest = Math.floor(audioEl.duration - audioEl.currentTime);
-    setEl('m-tiempo',
-      Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
+  // error: saltar al siguiente
+  el.addEventListener('error', function() {
+    if (audioGenId !== miGenId) return;
+    console.warn('Error cargando audio — saltando:', tema.Titulo, tema.AudioURL);
+    avanzarTema();
   });
 
-  // Mostrar duración real cuando el metadata esté disponible
-  audioEl.addEventListener('loadedmetadata', function() {
-    if (!audioEl) return;
-    var tot = Math.floor(audioEl.duration);
-    setEl('time-total', Math.floor(tot / 60) + ':' + (tot % 60).toString().padStart(2, '0'));
+  // Progreso en tiempo real
+  el.addEventListener('timeupdate', function() {
+    if (audioGenId !== miGenId || !el.duration) return;
+    var pct  = (el.currentTime / el.duration) * 100;
+    var pf   = document.getElementById('progress-fill');
+    if (pf) pf.style.width = pct.toFixed(1) + '%';
+    var cur  = Math.floor(el.currentTime);
+    setEl('time-current', Math.floor(cur / 60) + ':' + (cur % 60).toString().padStart(2, '0'));
+    var rest = Math.floor(el.duration - el.currentTime);
+    setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
   });
 }
 
@@ -89,14 +109,14 @@ function detenerAudio() {
     audioEl.src = '';
     audioEl     = null;
   }
+  // Incrementar genId hace que cualquier listener pendiente quede inválido
+  audioGenId++;
 }
 
 function iniciarProgressAudio() {
+  // Ya no se usa internamente — la lógica está en reproducirConAudioEl.
+  // Se mantiene por si algún código externo la llama.
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-  var pf = document.getElementById('progress-fill');
-  if (pf) pf.style.width = '0%';
-  setEl('time-current', '0:00');
-  setEl('time-total', '—');
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -576,14 +596,20 @@ function reproducirTema(index) {
   actualizarContadorTemas();
 
   if (esCortina(tema)) {
-    // Las cortinas se reproducen igual que cualquier tema si tienen AudioURL,
-    // y si no tienen se corta automáticamente por timer.
     if (tema.AudioURL) {
+      // Cortina con audio propio: se reproduce y avanza sola al terminar
       reproducirConAudioEl(tema);
     } else {
+      // Cortina sin audio: timer de 45s y visualización activa
       startAudioSimulation();
       activarRing(true);
-      cortinaTimer = setTimeout(avanzarTema, CORTINA_DURACION_SEG * 1000);
+      // Capturamos el genId actual para que si el usuario pulsa Stop
+      // antes de los 45s, el setTimeout no avance al siguiente tema.
+      var genAlIniciar = audioGenId;
+      cortinaTimer = setTimeout(function() {
+        if (audioGenId !== genAlIniciar) return;  // fue detenida/reemplazada
+        avanzarTema();
+      }, CORTINA_DURACION_SEG * 1000);
     }
     return;
   }
@@ -900,4 +926,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.3 · Cloudinary audio · ¡A bailar!');
+console.log('El Manijero panel v1.4 · Cloudinary audio · fixes: playlist completa + cortinas + timer · ¡A bailar!');
