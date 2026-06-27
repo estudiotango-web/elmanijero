@@ -76,6 +76,59 @@ function reproducirConAudioEl(tema) {
     setEl('time-current', '0:00');
     startAudioSimulation();
     activarRing(true);
+     // CORTE AUTOMÁTICO DE CORTINAS
+if (esCortina(tema)) {
+
+  var genCortina = miGenId;
+
+  cortinaTimer = setTimeout(function () {
+
+    if (audioGenId !== genCortina) return;
+
+    if (!audioEl) {
+      avanzarTema();
+      return;
+    }
+
+    var volumenInicial = audioEl.volume;
+
+    var pasos = 20;
+
+    var paso = 0;
+
+    var fade = setInterval(function () {
+
+      paso++;
+
+      audioEl.volume =
+        volumenInicial *
+        (1 - paso / pasos);
+
+      if (paso >= pasos) {
+
+        clearInterval(fade);
+
+        try {
+          audioEl.pause();
+          audioEl.currentTime = 0;
+          audioEl.volume = volumenInicial;
+        } catch (e) {}
+
+        avanzarTema();
+
+      }
+
+    }, 200);
+
+  },
+
+  Math.max(
+    1000,
+    (CORTINA_DURACION_SEG - 4)
+    * 1000
+  ));
+
+
   }, { once: true });
 
   // ended: avanza SOLO si esta instancia sigue siendo la activa
