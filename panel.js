@@ -128,7 +128,7 @@ if (esCortina(tema)) {
     * 1000
   ));
 
-
+}
   }, { once: true });
 
   // ended: avanza SOLO si esta instancia sigue siendo la activa
