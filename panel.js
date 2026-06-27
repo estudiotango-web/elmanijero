@@ -1,4 +1,4 @@
-/* El Manijero · panel.js v1.7
+/* El Manijero · panel.js v1.8
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
