@@ -106,6 +106,74 @@ function reproducirConAudioEl(tema) {
   });
 }
 
+function reproducirCortinaConFade(tema) {
+  detenerAudio();
+  var miGenId = ++audioGenId;
+  var FADE_IN_MS  = 2000;
+  var FADE_OUT_MS = 4000;
+  var STEP_MS     = 50;
+
+  var el      = new Audio();
+  el.crossOrigin = 'anonymous';
+  el.src      = tema.AudioURL;
+  el.volume   = 0;
+  el.preload  = 'auto';
+  audioEl     = el;
+
+  el.addEventListener('canplaythrough', function onReady() {
+    el.removeEventListener('canplaythrough', onReady);
+    if (audioGenId !== miGenId) return;
+
+    el.play().catch(function() {
+      if (audioGenId === miGenId) avanzarTema();
+    });
+
+    var pf = document.getElementById('progress-fill');
+    if (pf) pf.style.width = '0%';
+    setEl('time-current', '0:00');
+    setEl('time-total', '0:' + CORTINA_DURACION_SEG);
+    startAudioSimulation();
+    activarRing(true);
+
+    // ── Fade IN: 0 → volumen del knob en 2s ──────────────────────────
+    var targetVol = knobValue / 100;
+    var stepsIn   = FADE_IN_MS / STEP_MS;
+    var stepVolIn = targetVol / stepsIn;
+    var fadeInTimer = setInterval(function() {
+      if (audioGenId !== miGenId) { clearInterval(fadeInTimer); return; }
+      el.volume = Math.min(el.volume + stepVolIn, targetVol);
+      if (el.volume >= targetVol) clearInterval(fadeInTimer);
+    }, STEP_MS);
+
+    // ── Cortar a los 45s: fade OUT empieza a los 41s ─────────────────
+    var cutMs = CORTINA_DURACION_SEG * 1000;  // 45 000 ms
+    var fadeOutStartMs = cutMs - FADE_OUT_MS; // 41 000 ms
+
+    cortinaTimer = setTimeout(function() {
+      if (audioGenId !== miGenId) return;
+
+      var stepsOut   = FADE_OUT_MS / STEP_MS;
+      var stepVolOut = el.volume / stepsOut;
+
+      var fadeOutTimer = setInterval(function() {
+        if (audioGenId !== miGenId) { clearInterval(fadeOutTimer); return; }
+        el.volume = Math.max(el.volume - stepVolOut, 0);
+        if (el.volume <= 0) {
+          clearInterval(fadeOutTimer);
+          if (audioGenId === miGenId) avanzarTema();
+        }
+      }, STEP_MS);
+
+    }, fadeOutStartMs); // dispara a los 41s
+
+  }, { once: true });
+
+  el.addEventListener('error', function() {
+    if (audioGenId !== miGenId) return;
+    console.warn('Error cargando cortina — saltando:', tema.Titulo);
+    avanzarTema();
+  });
+}
 function detenerAudio() {
   if (audioEl) {
     audioEl.pause();
@@ -603,23 +671,20 @@ function reproducirTema(index) {
   reportarAlAI(tema);
 
   if (esCortina(tema)) {
-    if (tema.AudioURL) {
-      // Cortina con audio propio: se reproduce y avanza sola al terminar
-      reproducirConAudioEl(tema);
-    } else {
-      // Cortina sin audio: timer de 45s y visualización activa
-      startAudioSimulation();
-      activarRing(true);
-      // Capturamos el genId actual para que si el usuario pulsa Stop
-      // antes de los 45s, el setTimeout no avance al siguiente tema.
-      var genAlIniciar = audioGenId;
-      cortinaTimer = setTimeout(function() {
-        if (audioGenId !== genAlIniciar) return;  // fue detenida/reemplazada
-        avanzarTema();
-      }, CORTINA_DURACION_SEG * 1000);
-    }
-    return;
+  if (tema.AudioURL) {
+    reproducirCortinaConFade(tema);
+  } else {
+    // Cortina sin audio: timer 45s (sin cambios)
+    startAudioSimulation();
+    activarRing(true);
+    var genAlIniciar = audioGenId;
+    cortinaTimer = setTimeout(function() {
+      if (audioGenId !== genAlIniciar) return;
+      avanzarTema();
+    }, CORTINA_DURACION_SEG * 1000);
   }
+  return;
+}
 
   if (tema.AudioURL) {
     reproducirConAudioEl(tema);
