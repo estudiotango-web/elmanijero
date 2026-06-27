@@ -4,11 +4,11 @@
    Visualizaciones de audio · Gauges segmentados · Knob touch
    ─────────────────────────────────────────────────────────────────────── */
 
-const GAS_URL        = 'https://script.google.com/macros/s/AKfycbzEJ6-9u-BSO7i63mRQgtpZiFtT0IsGoKPqnglUmHXFmrs2Dd4dBGysWrn9jWjI38LP/exec';
+const GAS_URL        = 'https://script.google.com/macros/s/AKfycbxU2nDZQSw2mcQSW5YaioqOVvmaH8zLdLWdNbwUugUb-VHaptQV-VCuMJw-BliNu5B4/exec';
 const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
 
 // ⬇ URL del nuevo TANGO_DJ_AI — reemplazar con la URL del deploy de TANGO_DJ_AI.gs
-const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbyzqCqeXkoQS3RRoOFnX-GpgzKLjaF8Mly7dpdNRNtYvJaPs9t7qZbA2PJGvFelb73L/exec';
+const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbwxhdJ81Gi8IUpQsGS1gKJHgXQ4ZG_8A2gv1ggzEJ0r1awM1DLvMEx5bQmGBYWCks1A/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
@@ -644,7 +644,7 @@ function avanzarTema() {
 // ── Detección de cortina ───────────────────────────────────────────────────
 // Acepta "Cortina" con cualquier capitalización y espacios extra
 function esCortina(t) {
-  return String(t.Estilo || '').trim().toLowerCase() === 'cortina';
+  return String(t.Genero || '').trim().toLowerCase() === 'cortina';
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -671,26 +671,29 @@ function renderBibliotecaCargada() {
     badge.innerHTML = '<div class="live-dot" style="background:#c9a84c;box-shadow:none"></div><span> ' + info + '</span>';
   }
   setEl('badge-temas', biblioteca.length + ' temas');
-  setEl('badge-sub',   conAudio > 0 ? conAudio + ' con audio Cloudinary' : 'Biblioteca cargada');
+  setEl('badge-sub',   conAudio > 0 ? conAudio + ' temas con audio' : 'Biblioteca cargada');
 }
 
 function renderTemaActual(tema, index) {
   setEl('now-name', tema.Titulo  || '—');
   setEl('now-orq',  tema.Orquesta ? 'Orquesta ' + tema.Orquesta : '—');
-  setEl('now-year', (tema.Anio   || '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
-  setEl('m-tanda-sub', (tema.Estilo || '') + ' · ' + (tema.Orquesta || ''));
+  setEl('now-year', (tema.Anio || '') + (tema.Genero ? ' · ' + tema.Genero : '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
+  setEl('m-tanda-sub', (tema.Genero || '') + ' · ' + (tema.Orquesta || ''));
   setEl('m-tanda',     (index + 1) + ' / ' + biblioteca.length);
   setEl('ia-footer-text', 'Tema ' + (index + 1) + ' de ' + biblioteca.length + ' · analizando…');
   setEl('badge-temas', (index + 1) + ' / ' + biblioteca.length);
-  setEl('badge-sub',   'Tanda 1 · ' + (tema.Estilo || ''));
+  setEl('badge-sub',   'Tanda · ' + (tema.Genero || ''));
   setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '—'));
 
-  var html = '<span class="chip ch-' + (tema.Estilo || '').toLowerCase() + '">' + (tema.Estilo || '?') + '</span>';
+  // Chip principal: Genero (Tango / Vals / Milonga / Cortina)
+  var html = '<span class="chip ch-' + (tema.Genero || '').toLowerCase() + '">' + (tema.Genero || '?') + '</span>';
+  // Chip secundario: Estilo (Cantado / Instrumental)
+  if (tema.Estilo && !esCortina(tema)) html += '<span class="chip ch-gold">' + tema.Estilo + '</span>';
   if (tema.BPM > 0) html += '<span class="chip ch-gold">' + tema.BPM + ' BPM</span>';
   if (tema.Energia) html += '<span class="chip ch-gold">Energía ' + String(tema.Energia).toLowerCase() + '</span>';
   if (!esCortina(tema)) {
     if (tema.Calidad) html += '<span class="chip ch-cortina">Calidad: ' + tema.Calidad + '</span>';
-    html += '<span class="chip ch-green">☁ Cloudinary</span>';
+    html += '<span class="chip ch-green">✓ Audio HD</span>';
   }
 
   var chips = document.getElementById('now-chips');
@@ -720,7 +723,7 @@ function renderCola(temas) {
       (esNext ? '<i class="ti ti-arrow-right q-arrow"></i>' : '<span class="q-num">' + num + '</span>') +
       '<div class="q-info"><div class="q-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
       '<div class="q-orq">' + (esCortina(t) ? '0:45' : (t.Duracion || '—')) + ' · ' + (t.Estilo || '') + '</div></div>' +
-      '<span class="chip ch-' + (t.Estilo || '').toLowerCase() + '">' + (t.Estilo || '') + '</span></div>';
+      '<span class="chip ch-' + (t.Genero || '').toLowerCase() + '">' + (t.Genero || '') + '</span></div>';
   }).join('');
   renderProximaTanda(temas);
 }
@@ -734,7 +737,7 @@ function renderProximaTanda(temas) {
   lista.innerHTML = sug.map(function(t, i) {
     return '<div class="prox-item">' +
       '<div class="prox-info"><div class="prox-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
-      '<div class="prox-orq">' + (t.Estilo || '') + ' · ' + (t.Anio || '') + '</div></div>' +
+      '<div class="prox-orq">' + (t.Genero || '') + (t.Estilo ? ' · ' + t.Estilo : '') + ' · ' + (t.Anio || '') + '</div></div>' +
       '<span class="prox-badge">' + (badges[i] || '') + '</span></div>';
   }).join('');
 }
