@@ -8,7 +8,7 @@ const GAS_URL        = 'https://script.google.com/macros/s/AKfycbxU2nDZQSw2mcQSW
 const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
 
 // ⬇ URL del nuevo TANGO_DJ_AI — reemplazar con la URL del deploy de TANGO_DJ_AI.gs
-const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbwxhdJ81Gi8IUpQsGS1gKJHgXQ4ZG_8A2gv1ggzEJ0r1awM1DLvMEx5bQmGBYWCks1A/exec';
+const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbxkEgvzEQEezBMHrml-VAbrGACha02ggc_0FWCt7acrbwZB1sdZpV0JDPwLldwCdJY/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
@@ -941,49 +941,44 @@ var ultimoIDReportado = null;
 
 // Reporta al GAS qué tema está sonando ahora
 // Si es Cortina, el GAS dispara la generación de la siguiente tanda
+// Reporta al GAS qué tema está sonando ahora
+// Usa GET con parámetros para evitar el preflight CORS que bloquea POST
 function reportarAlAI(tema) {
-  if (!DJ_AI_URL || DJ_AI_URL.startsWith('PEGAR')) return; // no configurado aún
+  if (!DJ_AI_URL || DJ_AI_URL.startsWith('PEGAR')) return;
   if (!tema || !tema.ID) return;
-  if (tema.ID === ultimoIDReportado) return; // ya reportado
+  if (tema.ID === ultimoIDReportado) return;
   ultimoIDReportado = tema.ID;
 
-  var payload = {
-    action:     'reportarReproduccion',
-    ID:         tema.ID,
-    Titulo:     tema.Titulo     || '',
-    Orquesta:   tema.Orquesta   || '',
-    Genero:     tema.Genero     || '',
-    Estilo:     tema.Estilo     || '',
-    Anio:       tema.Anio       || '',
-    esCortina:  esCortina(tema),
-    indexActual: indexActual,
+  var params = new URLSearchParams({
+    action:          'reportarReproduccion',
+    ID:              tema.ID,
+    Titulo:          tema.Titulo     || '',
+    Orquesta:        tema.Orquesta   || '',
+    Genero:          tema.Genero     || '',
+    Estilo:          tema.Estilo     || '',
+    Anio:            tema.Anio       || '',
+    esCortina:       esCortina(tema) ? '1' : '0',
+    indexActual:     indexActual,
     totalBiblioteca: biblioteca.length,
-    timestamp:  new Date().toISOString(),
-  };
-
-  fetch(DJ_AI_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(payload),
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data && data.proximaTanda) {
-      // El GAS nos dice el género de la próxima tanda → mostrar en UI
-      setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
-      setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
-    }
-    if (data && data.temasAgregados > 0) {
-      console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
-      // Forzar reload inmediato de biblioteca para no esperar los 30s de polling
-      setTimeout(fetchBiblioteca, 3000);
-    }
-  })
-  .catch(function(err) {
-    console.warn('[DJ AI] Error reportando reproducción:', err.message);
+    timestamp:       new Date().toISOString(),
   });
-}
 
+  fetch(DJ_AI_URL + '?' + params.toString())
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.proximaTanda) {
+        setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
+        setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
+      }
+      if (data && data.temasAgregados > 0) {
+        console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
+        setTimeout(fetchBiblioteca, 3000);
+      }
+    })
+    .catch(function(err) {
+      console.warn('[DJ AI] Error reportando reproducción:', err.message);
+    });
+}
 // ── Arranque ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateClock();
