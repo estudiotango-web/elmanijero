@@ -4,11 +4,11 @@
    Visualizaciones de audio · Gauges segmentados · Knob touch
    ─────────────────────────────────────────────────────────────────────── */
 
-const GAS_URL        = 'https://script.google.com/macros/s/AKfycbyZ6i5i5r1QHtbBWj20KLY8AhQgfaqBQBh3G8ClB2Fy2eWL04hQOuqEIrOxAeLS2pSv/exec';
+const GAS_URL        = 'https://script.google.com/macros/s/AKfycbzEJ6-9u-BSO7i63mRQgtpZiFtT0IsGoKPqnglUmHXFmrs2Dd4dBGysWrn9jWjI38LP/exec';
 const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
 
 // ⬇ URL del nuevo TANGO_DJ_AI — reemplazar con la URL del deploy de TANGO_DJ_AI.gs
-const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbwxqP1MmASJqV-MGx2GdAyt2c1ky45Z1ee-zelnVyRfo9JeEaCf2FA6m54IBYf_FsME/exec';
+const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbyzqCqeXkoQS3RRoOFnX-GpgzKLjaF8Mly7dpdNRNtYvJaPs9t7qZbA2PJGvFelb73L/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
