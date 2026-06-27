@@ -1,12 +1,14 @@
-/* El Manijero · panel.js v1.6
+/* El Manijero · panel.js v1.7
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
-   Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · IDoriginal · AudioURL · Activo
-   Genero = Tango / Vals / Milonga / Cortina  |  Estilo = Cantado / Instrumental / etc.
+   Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
    ─────────────────────────────────────────────────────────────────────── */
 
 const GAS_URL        = 'https://script.google.com/macros/s/AKfycbyZ6i5i5r1QHtbBWj20KLY8AhQgfaqBQBh3G8ClB2Fy2eWL04hQOuqEIrOxAeLS2pSv/exec';
 const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
+
+// ⬇ URL del nuevo TANGO_DJ_AI — reemplazar con la URL del deploy de TANGO_DJ_AI.gs
+const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbwxqP1MmASJqV-MGx2GdAyt2c1ky45Z1ee-zelnVyRfo9JeEaCf2FA6m54IBYf_FsME/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
@@ -76,59 +78,6 @@ function reproducirConAudioEl(tema) {
     setEl('time-current', '0:00');
     startAudioSimulation();
     activarRing(true);
-     // CORTE AUTOMÁTICO DE CORTINAS
-if (esCortina(tema)) {
-
-  var genCortina = miGenId;
-
-  cortinaTimer = setTimeout(function () {
-
-    if (audioGenId !== genCortina) return;
-
-    if (!audioEl) {
-      avanzarTema();
-      return;
-    }
-
-    var volumenInicial = audioEl.volume;
-
-    var pasos = 20;
-
-    var paso = 0;
-
-    var fade = setInterval(function () {
-
-      paso++;
-
-      audioEl.volume =
-        volumenInicial *
-        (1 - paso / pasos);
-
-      if (paso >= pasos) {
-
-        clearInterval(fade);
-
-        try {
-          audioEl.pause();
-          audioEl.currentTime = 0;
-          audioEl.volume = volumenInicial;
-        } catch (e) {}
-
-        avanzarTema();
-
-      }
-
-    }, 200);
-
-  },
-
-  Math.max(
-    1000,
-    (CORTINA_DURACION_SEG - 4)
-    * 1000
-  ));
-
-}
   }, { once: true });
 
   // ended: avanza SOLO si esta instancia sigue siendo la activa
@@ -649,6 +598,10 @@ function reproducirTema(index) {
   renderCola(biblioteca.slice(index + 1, index + 6));
   actualizarContadorTemas();
 
+  // Reportar al TANGO_DJ_AI qué tema empieza a sonar.
+  // Si es Cortina, el GAS dispara la generación de la siguiente tanda.
+  reportarAlAI(tema);
+
   if (esCortina(tema)) {
     if (tema.AudioURL) {
       // Cortina con audio propio: se reproduce y avanza sola al terminar
@@ -688,9 +641,10 @@ function avanzarTema() {
   reproducirTema(indexActual);
 }
 
-// ── Detección de cortina — usa el campo Genero (col D de la hoja) ──────────
+// ── Detección de cortina ───────────────────────────────────────────────────
+// Acepta "Cortina" con cualquier capitalización y espacios extra
 function esCortina(t) {
-  return String(t.Genero || '').trim().toLowerCase() === 'cortina';
+  return String(t.Estilo || '').trim().toLowerCase() === 'cortina';
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -723,23 +677,20 @@ function renderBibliotecaCargada() {
 function renderTemaActual(tema, index) {
   setEl('now-name', tema.Titulo  || '—');
   setEl('now-orq',  tema.Orquesta ? 'Orquesta ' + tema.Orquesta : '—');
-  setEl('now-year', (tema.Anio || '') + (tema.Genero ? ' · ' + tema.Genero : '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
-  setEl('m-tanda-sub', (tema.Genero || '') + ' · ' + (tema.Orquesta || ''));
+  setEl('now-year', (tema.Anio   || '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
+  setEl('m-tanda-sub', (tema.Estilo || '') + ' · ' + (tema.Orquesta || ''));
   setEl('m-tanda',     (index + 1) + ' / ' + biblioteca.length);
   setEl('ia-footer-text', 'Tema ' + (index + 1) + ' de ' + biblioteca.length + ' · analizando…');
   setEl('badge-temas', (index + 1) + ' / ' + biblioteca.length);
-  setEl('badge-sub',   'Tanda 1 · ' + (tema.Genero || ''));
+  setEl('badge-sub',   'Tanda 1 · ' + (tema.Estilo || ''));
   setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '—'));
 
-  // Chip principal: Genero (Tango / Vals / Milonga / Cortina)
-  var html = '<span class="chip ch-' + (tema.Genero || '').toLowerCase() + '">' + (tema.Genero || '?') + '</span>';
-  // Chip secundario: Estilo (Cantado / Instrumental / etc.)
-  if (tema.Estilo) html += '<span class="chip ch-gold">' + tema.Estilo + '</span>';
+  var html = '<span class="chip ch-' + (tema.Estilo || '').toLowerCase() + '">' + (tema.Estilo || '?') + '</span>';
   if (tema.BPM > 0) html += '<span class="chip ch-gold">' + tema.BPM + ' BPM</span>';
   if (tema.Energia) html += '<span class="chip ch-gold">Energía ' + String(tema.Energia).toLowerCase() + '</span>';
   if (!esCortina(tema)) {
     if (tema.Calidad) html += '<span class="chip ch-cortina">Calidad: ' + tema.Calidad + '</span>';
-    html += '<span class="chip ch-green">✓ Audio HD</span>';
+    html += '<span class="chip ch-green">☁ Cloudinary</span>';
   }
 
   var chips = document.getElementById('now-chips');
@@ -769,7 +720,7 @@ function renderCola(temas) {
       (esNext ? '<i class="ti ti-arrow-right q-arrow"></i>' : '<span class="q-num">' + num + '</span>') +
       '<div class="q-info"><div class="q-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
       '<div class="q-orq">' + (esCortina(t) ? '0:45' : (t.Duracion || '—')) + ' · ' + (t.Estilo || '') + '</div></div>' +
-      '<span class="chip ch-' + (t.Genero || '').toLowerCase() + '">' + (t.Genero || '') + '</span></div>';
+      '<span class="chip ch-' + (t.Estilo || '').toLowerCase() + '">' + (t.Estilo || '') + '</span></div>';
   }).join('');
   renderProximaTanda(temas);
 }
@@ -783,7 +734,7 @@ function renderProximaTanda(temas) {
   lista.innerHTML = sug.map(function(t, i) {
     return '<div class="prox-item">' +
       '<div class="prox-info"><div class="prox-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
-      '<div class="prox-orq">' + (t.Genero || '') + (t.Estilo ? ' · ' + t.Estilo : '') + ' · ' + (t.Anio || '') + '</div></div>' +
+      '<div class="prox-orq">' + (t.Estilo || '') + ' · ' + (t.Anio || '') + '</div></div>' +
       '<span class="prox-badge">' + (badges[i] || '') + '</span></div>';
   }).join('');
 }
@@ -969,6 +920,67 @@ function handleResize() {
   if (ev) { ev.width = ev.offsetWidth || 300; drawEvolucionChart(); }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// CONEXIÓN CON TANGO_DJ_AI
+// ══════════════════════════════════════════════════════════════════════════
+//
+// El panel reporta al GAS en dos momentos clave:
+//   1. Cuando EMPIEZA una Cortina → el GAS genera la siguiente tanda
+//   2. Cuando EMPIEZA cualquier tema → el GAS registra qué está sonando
+//
+// El GAS agrega la nueva tanda al final de BIBLIOTECA.
+// El polling de fetchBiblioteca() (cada 30s) la detecta y la suma a la cola.
+// El reproductor continúa sin interrupciones.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Evita reportar el mismo tema dos veces seguidas
+var ultimoIDReportado = null;
+
+// Reporta al GAS qué tema está sonando ahora
+// Si es Cortina, el GAS dispara la generación de la siguiente tanda
+function reportarAlAI(tema) {
+  if (!DJ_AI_URL || DJ_AI_URL.startsWith('PEGAR')) return; // no configurado aún
+  if (!tema || !tema.ID) return;
+  if (tema.ID === ultimoIDReportado) return; // ya reportado
+  ultimoIDReportado = tema.ID;
+
+  var payload = {
+    action:     'reportarReproduccion',
+    ID:         tema.ID,
+    Titulo:     tema.Titulo     || '',
+    Orquesta:   tema.Orquesta   || '',
+    Genero:     tema.Genero     || '',
+    Estilo:     tema.Estilo     || '',
+    Anio:       tema.Anio       || '',
+    esCortina:  esCortina(tema),
+    indexActual: indexActual,
+    totalBiblioteca: biblioteca.length,
+    timestamp:  new Date().toISOString(),
+  };
+
+  fetch(DJ_AI_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data && data.proximaTanda) {
+      // El GAS nos dice el género de la próxima tanda → mostrar en UI
+      setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
+      setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
+    }
+    if (data && data.temasAgregados > 0) {
+      console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
+      // Forzar reload inmediato de biblioteca para no esperar los 30s de polling
+      setTimeout(fetchBiblioteca, 3000);
+    }
+  })
+  .catch(function(err) {
+    console.warn('[DJ AI] Error reportando reproducción:', err.message);
+  });
+}
+
 // ── Arranque ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateClock();
@@ -982,4 +994,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.4 · Cloudinary audio · fixes: playlist completa + cortinas + timer · ¡A bailar!');
+console.log('El Manijero panel v1.7 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
