@@ -696,16 +696,28 @@ function reproducirTema(index) {
 }
 
 // ── avanzarTema — avanza sin importar el estado interno ───────────────────
-// (antes verificaba estadoPanel === 'playing' y bloqueaba el avance)
 function avanzarTema() {
-  // Solo saltamos si realmente estamos en reproducción o si es un avance
-  // automático por cortina/error; no avanzamos si el usuario detuvo todo.
   if (estadoPanel === 'stopped' || estadoPanel === 'idle') return;
   indexActual++;
-  if (indexActual >= biblioteca.length) { finDeLaNoche(); return; }
+  if (indexActual >= biblioteca.length) {
+    console.log('[DJ AI] Cola vacía — reintentando fetchBiblioteca cada 3s...');
+    setEl('ia-texto', 'Preparando próxima tanda…');
+    var esperarCola = setInterval(function() {
+      if (estadoPanel === 'stopped' || estadoPanel === 'idle') {
+        clearInterval(esperarCola);
+        return;
+      }
+      if (indexActual < biblioteca.length) {
+        clearInterval(esperarCola);
+        reproducirTema(indexActual);
+        return;
+      }
+      fetchBiblioteca();
+    }, 3000);
+    return;
+  }
   reproducirTema(indexActual);
 }
-
 // ── Detección de cortina ───────────────────────────────────────────────────
 // Acepta "Cortina" con cualquier capitalización y espacios extra
 function esCortina(t) {
