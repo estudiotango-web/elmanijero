@@ -600,25 +600,34 @@ async function fetchBiblioteca() {
       renderBibliotecaCargada();
       actualizarBotones();
       iniciarPolling();
-    // DESPUÉS
+    
 } else {
-  var longAntes     = biblioteca.length;
-  // Solo los temas ANTERIORES al actual se consideran reproducidos
-  var idsYaReprod   = new Set(biblioteca.slice(0, indexActual).map(function(t){ return t.ID; }));
-  // El actual + lo que sigue se mantiene intacto
-  var colaActual    = biblioteca.slice(indexActual);
-  var idsColaActual = new Set(colaActual.map(function(t){ return t.ID; }));
-  // Solo agregar temas genuinamente nuevos (no reproducidos y no en cola)
-  var temasNuevos   = data.filter(function(t){
+  var longAntes      = biblioteca.length;
+  var idActual       = biblioteca[indexActual] ? biblioteca[indexActual].ID : null;
+  var idsYaReprod    = new Set(biblioteca.slice(0, indexActual).map(function(t){ return t.ID; }));
+  var colaActual     = biblioteca.slice(indexActual);
+  var idsColaActual  = new Set(colaActual.map(function(t){ return t.ID; }));
+  var temasNuevos    = data.filter(function(t){
     return !idsYaReprod.has(t.ID) && !idsColaActual.has(t.ID);
   });
-  biblioteca = colaActual.concat(temasNuevos);
-  indexActual = 0; // el actual siempre queda en posición 0 de la cola
+  biblioteca  = colaActual.concat(temasNuevos);
+
+  // Reapuntar indexActual al tema que estaba sonando
+  if (idActual) {
+    var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === idActual; });
+    indexActual  = nuevoIdx !== -1 ? nuevoIdx : 0;
+  } else {
+    indexActual = 0;
+  }
+
   var diff = biblioteca.length - longAntes;
   if (diff !== 0) {
     mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
   }
-  if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
+  if (estadoPanel === 'playing') {
+    renderCola(biblioteca.slice(indexActual + 1, indexActual + 6));
+    actualizarContadorTemas();
+  }
 }
   } catch(e) {
     console.warn('Error cargando biblioteca:', e);
