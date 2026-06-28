@@ -1,4 +1,4 @@
-/* El Manijero · panel.js v1.9
+/* El Manijero · panel.js v1.7
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
@@ -600,35 +600,21 @@ async function fetchBiblioteca() {
       renderBibliotecaCargada();
       actualizarBotones();
       iniciarPolling();
-    
-} else {
-  var longAntes      = biblioteca.length;
-  var idActual       = biblioteca[indexActual] ? biblioteca[indexActual].ID : null;
-  var idsYaReprod    = new Set(biblioteca.slice(0, indexActual).map(function(t){ return t.ID; }));
-  var colaActual     = biblioteca.slice(indexActual);
-  var idsColaActual  = new Set(colaActual.map(function(t){ return t.ID; }));
-  var temasNuevos    = data.filter(function(t){
-    return !idsYaReprod.has(t.ID) && !idsColaActual.has(t.ID);
-  });
-  biblioteca  = colaActual.concat(temasNuevos);
-
-  // Reapuntar indexActual al tema que estaba sonando
-  if (idActual) {
-    var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === idActual; });
-    indexActual  = nuevoIdx !== -1 ? nuevoIdx : 0;
-  } else {
-    indexActual = 0;
-  }
-
-  var diff = biblioteca.length - longAntes;
-  if (diff !== 0) {
-    mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
-  }
-  if (estadoPanel === 'playing') {
-    renderCola(biblioteca.slice(indexActual + 1, indexActual + 6));
-    actualizarContadorTemas();
-  }
-}
+    } else {
+      var temaActual = biblioteca[indexActual];
+      var yaReprod   = biblioteca.slice(0, indexActual + 1);
+      var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
+      var colaNueva  = data.filter(function(t){ return !idsYa.has(t.ID); });
+      var longAntes  = biblioteca.length;
+      biblioteca     = yaReprod.concat(colaNueva);
+      var nuevoIdx   = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
+      if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
+      var diff = biblioteca.length - longAntes;
+      if (diff !== 0) {
+        mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
+        if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
+      }
+    }
   } catch(e) {
     console.warn('Error cargando biblioteca:', e);
     if (esPrimera) mostrarEstadoCarga('Error al conectar con la biblioteca.');
@@ -710,29 +696,13 @@ function reproducirTema(index) {
 }
 
 // ── avanzarTema — avanza sin importar el estado interno ───────────────────
-
+// (antes verificaba estadoPanel === 'playing' y bloqueaba el avance)
 function avanzarTema() {
+  // Solo saltamos si realmente estamos en reproducción o si es un avance
+  // automático por cortina/error; no avanzamos si el usuario detuvo todo.
   if (estadoPanel === 'stopped' || estadoPanel === 'idle') return;
   indexActual++;
-  if (indexActual >= biblioteca.length) {
-    // Cola vacía — esperar sin límite hasta que llegue la próxima tanda
-    console.log('[DJ AI] Cola vacía — esperando nueva tanda...');
-    setEl('ia-texto', 'Preparando próxima tanda…');
-    var esperarCola = setInterval(function() {
-      if (estadoPanel === 'stopped' || estadoPanel === 'idle') {
-        clearInterval(esperarCola);
-        return;
-      }
-      if (indexActual < biblioteca.length) {
-        clearInterval(esperarCola);
-        reproducirTema(indexActual);
-        return;
-      }
-      // Buscar activamente mientras espera
-      fetchBiblioteca();
-    }, 3000);
-    return;
-  }
+  if (indexActual >= biblioteca.length) { finDeLaNoche(); return; }
   reproducirTema(indexActual);
 }
 
@@ -1065,11 +1035,10 @@ function reportarAlAI(tema) {
         setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
         setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
       }
-      // DESPUÉS
-if (data && data.temasAgregados > 0) {
-  console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
-  fetchBiblioteca(); // inmediato, sin delay
-}
+      if (data && data.temasAgregados > 0) {
+        console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
+        setTimeout(fetchBiblioteca, 3000);
+      }
     })
     .catch(function(err) {
       console.warn('[DJ AI] Error reportando reproducción:', err.message);
@@ -1088,4 +1057,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.9 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
+console.log('El Manijero panel v1.7 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
