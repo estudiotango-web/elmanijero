@@ -601,14 +601,16 @@ async function fetchBiblioteca() {
       actualizarBotones();
       iniciarPolling();
     } else {
-      var temaActual = biblioteca[indexActual];
-      var yaReprod   = biblioteca.slice(0, indexActual + 1);
-      var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
-      var colaNueva  = data.filter(function(t){ return !idsYa.has(t.ID); });
-      var longAntes  = biblioteca.length;
-      biblioteca     = yaReprod.concat(colaNueva);
-      var nuevoIdx   = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
-      if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
+      var temaActual = biblioteca[indexActual] || null;
+var yaReprod   = biblioteca.slice(0, indexActual + 1);
+var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
+var colaNueva  = data.filter(function(t){ return !idsYa.has(t.ID); });
+var longAntes  = biblioteca.length;
+biblioteca     = yaReprod.concat(colaNueva);
+if (temaActual) {
+  var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
+  if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
+}
       var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
         mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
