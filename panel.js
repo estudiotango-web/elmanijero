@@ -608,16 +608,15 @@ async function fetchBiblioteca() {
 
       var longAntes = biblioteca.length;
       // Mantener cola actual + agregar nuevos al final
-      biblioteca = biblioteca.slice(indexActual).concat(temasNuevos);
+      biblioteca = biblioteca.slice(indexActual + 1).concat(temasNuevos);
 
       // Reapuntar indexActual al tema que está sonando
       if (temaActual) {
-        var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
-        if (nuevoIdx !== -1) indexActual = nuevoIdx;
-        else indexActual = 0;
-      } else {
-        indexActual = 0;
-      }
+  biblioteca.unshift(temaActual);
+  indexActual = 0;
+} else {
+  indexActual = 0;
+}
 
       var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
