@@ -1,4 +1,4 @@
-/* El Manijero · panel.js v1.7
+/* El Manijero · panel.js v1.9
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
    Visualizaciones de audio · Gauges segmentados · Knob touch
@@ -6,9 +6,7 @@
 
 const GAS_URL        = 'https://script.google.com/macros/s/AKfycbxU2nDZQSw2mcQSW5YaioqOVvmaH8zLdLWdNbwUugUb-VHaptQV-VCuMJw-BliNu5B4/exec';
 const CAMARA_GAS_URL = 'https://script.google.com/macros/s/AKfycbyf5PxDiGaePrUZl7nK9ImKqw_Rt4iVk5Kg4QpvTTYn-m4Ymuzjb4h9KXhijWsFEIS5GA/exec';
-
-// ⬇ URL del nuevo TANGO_DJ_AI — reemplazar con la URL del deploy de TANGO_DJ_AI.gs
-const DJ_AI_URL = 'https://script.google.com/macros/s/AKfycbxkEgvzEQEezBMHrml-VAbrGACha02ggc_0FWCt7acrbwZB1sdZpV0JDPwLldwCdJY/exec';
+const DJ_AI_URL      = 'https://script.google.com/macros/s/AKfycbxkEgvzEQEezBMHrml-VAbrGACha02ggc_0FWCt7acrbwZB1sdZpV0JDPwLldwCdJY/exec';
 
 const CORTINA_DURACION_SEG = 45;
 const POLLING_INTERVAL_MS  = 30000;
@@ -31,10 +29,8 @@ let energiaHistory = [];
 const MAX_ENERGIA_HISTORY = 60;
 
 // ── Audio nativo (Cloudinary) ──────────────────────────────────────────────
-let audioEl      = null;
-let audioGenId   = 0;   // ← ID de generación: cada nueva instancia tiene el suyo.
-                         //   Los callbacks comprueban que siguen siendo "dueños"
-                         //   del audioEl actual antes de actuar.
+let audioEl    = null;
+let audioGenId = 0;
 
 // ══════════════════════════════════════════════════════════════════════════
 // AUDIO — Cloudinary
@@ -42,22 +38,15 @@ let audioGenId   = 0;   // ← ID de generación: cada nueva instancia tiene el 
 
 function reproducirConAudioEl(tema) {
   detenerAudio();
-
-  // Cada llamada recibe un ID único. Los listeners lo capturan por closure
-  // y lo comparan con audioGenId antes de actuar — así los listeners de
-  // instancias viejas (ya destruidas) no pueden disparar avanzarTema ni
-  // actualizar la UI del tema nuevo.
   var miGenId = ++audioGenId;
 
-  var el             = new Audio();
-  el.crossOrigin     = 'anonymous';
-  el.src             = tema.AudioURL;
-  el.volume          = knobValue / 100;
-  el.preload         = 'auto';
-  audioEl            = el;
+  var el         = new Audio();
+  el.crossOrigin = 'anonymous';
+  el.src         = tema.AudioURL;
+  el.volume      = knobValue / 100;
+  el.preload     = 'auto';
+  audioEl        = el;
 
-  // Duración: se muestra en cuanto llega loadedmetadata (puede ser antes
-  // o después de canplaythrough, por eso no reseteamos time-total en '—').
   el.addEventListener('loadedmetadata', function() {
     if (audioGenId !== miGenId) return;
     var tot = Math.floor(el.duration);
@@ -66,13 +55,12 @@ function reproducirConAudioEl(tema) {
 
   el.addEventListener('canplaythrough', function onReady() {
     el.removeEventListener('canplaythrough', onReady);
-    if (audioGenId !== miGenId) return;   // instancia ya reemplazada
+    if (audioGenId !== miGenId) return;
     el.play().catch(function(err) {
       if (audioGenId !== miGenId) return;
       console.warn('Error al reproducir audio de Cloudinary:', err);
       avanzarTema();
     });
-    // Resetear barra pero NO time-total (ya lo puso loadedmetadata)
     var pf = document.getElementById('progress-fill');
     if (pf) pf.style.width = '0%';
     setEl('time-current', '0:00');
@@ -80,26 +68,23 @@ function reproducirConAudioEl(tema) {
     activarRing(true);
   }, { once: true });
 
-  // ended: avanza SOLO si esta instancia sigue siendo la activa
   el.addEventListener('ended', function() {
     if (audioGenId !== miGenId) return;
     avanzarTema();
   });
 
-  // error: saltar al siguiente
   el.addEventListener('error', function() {
     if (audioGenId !== miGenId) return;
     console.warn('Error cargando audio — saltando:', tema.Titulo, tema.AudioURL);
     avanzarTema();
   });
 
-  // Progreso en tiempo real
   el.addEventListener('timeupdate', function() {
     if (audioGenId !== miGenId || !el.duration) return;
-    var pct  = (el.currentTime / el.duration) * 100;
-    var pf   = document.getElementById('progress-fill');
+    var pct = (el.currentTime / el.duration) * 100;
+    var pf  = document.getElementById('progress-fill');
     if (pf) pf.style.width = pct.toFixed(1) + '%';
-    var cur  = Math.floor(el.currentTime);
+    var cur = Math.floor(el.currentTime);
     setEl('time-current', Math.floor(cur / 60) + ':' + (cur % 60).toString().padStart(2, '0'));
     var rest = Math.floor(el.duration - el.currentTime);
     setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
@@ -108,17 +93,17 @@ function reproducirConAudioEl(tema) {
 
 function reproducirCortinaConFade(tema) {
   detenerAudio();
-  var miGenId = ++audioGenId;
+  var miGenId     = ++audioGenId;
   var FADE_IN_MS  = 2000;
   var FADE_OUT_MS = 4000;
   var STEP_MS     = 50;
 
-  var el      = new Audio();
+  var el         = new Audio();
   el.crossOrigin = 'anonymous';
-  el.src      = tema.AudioURL;
-  el.volume   = 0;
-  el.preload  = 'auto';
-  audioEl     = el;
+  el.src         = tema.AudioURL;
+  el.volume      = 0;
+  el.preload     = 'auto';
+  audioEl        = el;
 
   el.addEventListener('canplaythrough', function onReady() {
     el.removeEventListener('canplaythrough', onReady);
@@ -132,6 +117,21 @@ function reproducirCortinaConFade(tema) {
     if (pf) pf.style.width = '0%';
     setEl('time-current', '0:00');
     setEl('time-total', '0:' + CORTINA_DURACION_SEG);
+
+    // Timer de progreso visual para la cortina
+    var cortinaSegActual = 0;
+    var cortinaProgTimer = setInterval(function() {
+      if (audioGenId !== miGenId) { clearInterval(cortinaProgTimer); return; }
+      cortinaSegActual++;
+      var pct = Math.min((cortinaSegActual / CORTINA_DURACION_SEG) * 100, 100);
+      var pf2 = document.getElementById('progress-fill');
+      if (pf2) pf2.style.width = pct.toFixed(1) + '%';
+      setEl('time-current', Math.floor(cortinaSegActual / 60) + ':' + (cortinaSegActual % 60).toString().padStart(2, '0'));
+      var rest = CORTINA_DURACION_SEG - cortinaSegActual;
+      setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
+      if (cortinaSegActual >= CORTINA_DURACION_SEG) clearInterval(cortinaProgTimer);
+    }, 1000);
+
     startAudioSimulation();
     activarRing(true);
 
@@ -146,8 +146,7 @@ function reproducirCortinaConFade(tema) {
     }, STEP_MS);
 
     // ── Cortar a los 45s: fade OUT empieza a los 41s ─────────────────
-    var cutMs = CORTINA_DURACION_SEG * 1000;  // 45 000 ms
-    var fadeOutStartMs = cutMs - FADE_OUT_MS; // 41 000 ms
+    var fadeOutStartMs = (CORTINA_DURACION_SEG * 1000) - FADE_OUT_MS;
 
     cortinaTimer = setTimeout(function() {
       if (audioGenId !== miGenId) return;
@@ -164,7 +163,7 @@ function reproducirCortinaConFade(tema) {
         }
       }, STEP_MS);
 
-    }, fadeOutStartMs); // dispara a los 41s
+    }, fadeOutStartMs);
 
   }, { once: true });
 
@@ -174,19 +173,17 @@ function reproducirCortinaConFade(tema) {
     avanzarTema();
   });
 }
+
 function detenerAudio() {
   if (audioEl) {
     audioEl.pause();
     audioEl.src = '';
     audioEl     = null;
   }
-  // Incrementar genId hace que cualquier listener pendiente quede inválido
   audioGenId++;
 }
 
 function iniciarProgressAudio() {
-  // Ya no se usa internamente — la lógica está en reproducirConAudioEl.
-  // Se mantiene por si algún código externo la llama.
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
 }
 
@@ -313,8 +310,8 @@ function drawKnob(value) {
 }
 
 function getEventY(e) {
-  if (e.touches && e.touches.length > 0)              return e.touches[0].clientY;
-  if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
+  if (e.touches && e.touches.length > 0)               return e.touches[0].clientY;
+  if (e.changedTouches && e.changedTouches.length > 0)  return e.changedTouches[0].clientY;
   return e.clientY;
 }
 
@@ -584,12 +581,7 @@ async function fetchBiblioteca() {
     var res  = await fetch(GAS_URL + '?action=getBiblioteca');
     var data = await res.json();
 
-    // Normalizar campos según el orden real de columnas:
-    // ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
-    // El GAS devuelve objetos con esas claves — solo nos aseguramos de que
-    // AudioURL esté presente y sea la URL de Cloudinary.
     data = data.map(function(t) {
-      // Compatibilidad: si el GAS aún devuelve CloudinaryURL en vez de AudioURL
       if (!t.AudioURL && t.CloudinaryURL) t.AudioURL = t.CloudinaryURL;
       return t;
     });
@@ -601,24 +593,39 @@ async function fetchBiblioteca() {
       actualizarBotones();
       iniciarPolling();
     } else {
-      var temaActual = biblioteca[indexActual] || null;
-var yaReprod   = biblioteca.slice(0, indexActual + 1);
-var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
-var colaNueva = data.filter(function(t){
-  // Las cortinas nunca se filtran por ID — pueden repetirse
-  if (String(t.Genero || '').trim().toLowerCase() === 'cortina') return true;
-  return !idsYa.has(t.ID);
-});
-var longAntes  = biblioteca.length;
-biblioteca     = yaReprod.concat(colaNueva);
-if (temaActual) {
-  var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
-  if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
-}
+      var temaActual    = biblioteca[indexActual] || null;
+      // IDs ya reproducidos (estrictamente anteriores al actual)
+      var idsYaReprod   = new Set(biblioteca.slice(0, indexActual).map(function(t){ return t.ID; }));
+      // IDs que ya están en la cola actual (desde indexActual en adelante)
+      var idsColaActual = new Set(biblioteca.slice(indexActual).map(function(t){ return t.ID; }));
+
+      var temasNuevos = data.filter(function(t){
+        // Cortinas: no duplicar en cola, pero sí pueden volver si ya sonaron
+        if (esCortina(t)) return !idsColaActual.has(t.ID);
+        // Temas normales: no reproducidos y no ya en cola
+        return !idsYaReprod.has(t.ID) && !idsColaActual.has(t.ID);
+      });
+
+      var longAntes = biblioteca.length;
+      // Mantener cola actual + agregar nuevos al final
+      biblioteca = biblioteca.slice(indexActual).concat(temasNuevos);
+
+      // Reapuntar indexActual al tema que está sonando
+      if (temaActual) {
+        var nuevoIdx = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
+        if (nuevoIdx !== -1) indexActual = nuevoIdx;
+        else indexActual = 0;
+      } else {
+        indexActual = 0;
+      }
+
       var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
         mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
-        if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
+      }
+      if (estadoPanel === 'playing') {
+        renderCola(biblioteca.slice(indexActual + 1, indexActual + 6));
+        actualizarContadorTemas();
       }
     }
   } catch(e) {
@@ -661,6 +668,23 @@ function stopMilonga() {
   setEl('ia-texto', 'Milonga detenida.'); renderCola([]);
 }
 
+// ── Posición dentro de la tanda actual ────────────────────────────────────
+function calcularPosEnTanda() {
+  // Contar hacia atrás desde indexActual hasta la última cortina
+  var pos = 1;
+  for (var i = indexActual - 1; i >= 0; i--) {
+    if (esCortina(biblioteca[i])) break;
+    pos++;
+  }
+  // Contar temas de la tanda actual (hasta próxima cortina o fin)
+  var total = pos;
+  for (var j = indexActual + 1; j < biblioteca.length; j++) {
+    if (esCortina(biblioteca[j])) break;
+    total++;
+  }
+  return { pos: pos, total: total };
+}
+
 // ── Reproducir tema ────────────────────────────────────────────────────────
 function reproducirTema(index) {
   if (index >= biblioteca.length) { finDeLaNoche(); return; }
@@ -671,37 +695,32 @@ function reproducirTema(index) {
   renderTemaActual(tema, index);
   renderCola(biblioteca.slice(index + 1, index + 6));
   actualizarContadorTemas();
-
-  // Reportar al TANGO_DJ_AI qué tema empieza a sonar.
-  // Si es Cortina, el GAS dispara la generación de la siguiente tanda.
   reportarAlAI(tema);
 
   if (esCortina(tema)) {
-  if (tema.AudioURL) {
-    reproducirCortinaConFade(tema);
-  } else {
-    // Cortina sin audio: timer 45s (sin cambios)
-    startAudioSimulation();
-    activarRing(true);
-    var genAlIniciar = audioGenId;
-    cortinaTimer = setTimeout(function() {
-      if (audioGenId !== genAlIniciar) return;
-      avanzarTema();
-    }, CORTINA_DURACION_SEG * 1000);
+    if (tema.AudioURL) {
+      reproducirCortinaConFade(tema);
+    } else {
+      startAudioSimulation();
+      activarRing(true);
+      var genAlIniciar = audioGenId;
+      cortinaTimer = setTimeout(function() {
+        if (audioGenId !== genAlIniciar) return;
+        avanzarTema();
+      }, CORTINA_DURACION_SEG * 1000);
+    }
+    return;
   }
-  return;
-}
 
   if (tema.AudioURL) {
     reproducirConAudioEl(tema);
   } else {
-    // Sin fuente de audio — saltar al siguiente
     console.warn('Tema sin AudioURL — saltando:', tema.Titulo);
     setTimeout(avanzarTema, 800);
   }
 }
 
-// ── avanzarTema — avanza sin importar el estado interno ───────────────────
+// ── avanzarTema ───────────────────────────────────────────────────────────
 function avanzarTema() {
   if (estadoPanel === 'stopped' || estadoPanel === 'idle') return;
   indexActual++;
@@ -724,8 +743,8 @@ function avanzarTema() {
   }
   reproducirTema(indexActual);
 }
+
 // ── Detección de cortina ───────────────────────────────────────────────────
-// Acepta "Cortina" con cualquier capitalización y espacios extra
 function esCortina(t) {
   return String(t.Genero || '').trim().toLowerCase() === 'cortina';
 }
@@ -762,15 +781,13 @@ function renderTemaActual(tema, index) {
   setEl('now-orq',  tema.Orquesta ? 'Orquesta ' + tema.Orquesta : '—');
   setEl('now-year', (tema.Anio || '') + (tema.Genero ? ' · ' + tema.Genero : '') + (tema.Estilo ? ' · ' + tema.Estilo : ''));
   setEl('m-tanda-sub', (tema.Genero || '') + ' · ' + (tema.Orquesta || ''));
-  setEl('m-tanda',     (index + 1) + ' / ' + biblioteca.length);
   setEl('ia-footer-text', 'Tema ' + (index + 1) + ' de ' + biblioteca.length + ' · analizando…');
   setEl('badge-temas', (index + 1) + ' / ' + biblioteca.length);
   setEl('badge-sub',   'Tanda · ' + (tema.Genero || ''));
   setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '—'));
 
-  // Chip principal: Genero (Tango / Vals / Milonga / Cortina)
+  // Chip principal
   var html = '<span class="chip ch-' + (tema.Genero || '').toLowerCase() + '">' + (tema.Genero || '?') + '</span>';
-  // Chip secundario: Estilo (Cantado / Instrumental)
   if (tema.Estilo && !esCortina(tema)) html += '<span class="chip ch-gold">' + tema.Estilo + '</span>';
   if (tema.BPM > 0) html += '<span class="chip ch-gold">' + tema.BPM + ' BPM</span>';
   if (tema.Energia) html += '<span class="chip ch-gold">Energía ' + String(tema.Energia).toLowerCase() + '</span>';
@@ -778,7 +795,6 @@ function renderTemaActual(tema, index) {
     if (tema.Calidad) html += '<span class="chip ch-cortina">Calidad: ' + tema.Calidad + '</span>';
     html += '<span class="chip ch-green">✓ Audio HD</span>';
   }
-
   var chips = document.getElementById('now-chips');
   if (chips) chips.innerHTML = html;
 
@@ -790,7 +806,18 @@ function renderTemaActual(tema, index) {
 }
 
 function actualizarContadorTemas() {
-  setEl('m-tanda', (estadoPanel === 'playing' || estadoPanel === 'paused' ? (indexActual + 1) : '0') + ' / ' + biblioteca.length);
+  if (estadoPanel !== 'playing' && estadoPanel !== 'paused') {
+    setEl('m-tanda', '0 / 0');
+    return;
+  }
+  var tema = biblioteca[indexActual];
+  if (!tema) return;
+  if (esCortina(tema)) {
+    setEl('m-tanda', 'Cortina');
+  } else {
+    var pt = calcularPosEnTanda();
+    setEl('m-tanda', pt.pos + ' / ' + pt.total);
+  }
 }
 
 function renderCola(temas) {
@@ -813,11 +840,29 @@ function renderCola(temas) {
 
 function renderProximaTanda(temas) {
   var lista = document.getElementById('proxima-list');
-  if (!lista || !temas.length) return;
-  var sug    = temas.filter(function(t){ return !esCortina(t); }).slice(0, 2);
-  if (!sug.length) return;
-  var badges = ['Alta conexión', 'Energía ideal'];
-  lista.innerHTML = sug.map(function(t, i) {
+  if (!lista) return;
+
+  // Buscar temas DESPUÉS de la próxima cortina (= tanda siguiente real)
+  var despuesDeCortina = false;
+  var proximaTanda = [];
+  for (var i = 0; i < temas.length; i++) {
+    if (esCortina(temas[i])) {
+      despuesDeCortina = true;
+      continue;
+    }
+    if (despuesDeCortina) {
+      proximaTanda.push(temas[i]);
+      if (proximaTanda.length >= 2) break;
+    }
+  }
+
+  if (!proximaTanda.length) {
+    lista.innerHTML = '<div class="prox-item"><div class="prox-info"><div class="prox-track">Generando próxima tanda…</div></div></div>';
+    return;
+  }
+
+  var badges = ['Primer tema', 'Segundo tema'];
+  lista.innerHTML = proximaTanda.map(function(t, i) {
     return '<div class="prox-item">' +
       '<div class="prox-info"><div class="prox-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
       '<div class="prox-orq">' + (t.Genero || '') + (t.Estilo ? ' · ' + t.Estilo : '') + ' · ' + (t.Anio || '') + '</div></div>' +
@@ -853,7 +898,6 @@ function actualizarLiveBadge() {
     b.innerHTML = '<div class="live-dot" style="background:#555;animation:none"></div><span> Detenido</span>';
 }
 
-// ── Progreso timer (fallback si no hay metadata de duración) ──────────────
 function iniciarProgress(tema) {
   if (progressTimer) clearInterval(progressTimer);
   var durStr   = esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '0:00');
@@ -1009,23 +1053,9 @@ function handleResize() {
 // ══════════════════════════════════════════════════════════════════════════
 // CONEXIÓN CON TANGO_DJ_AI
 // ══════════════════════════════════════════════════════════════════════════
-//
-// El panel reporta al GAS en dos momentos clave:
-//   1. Cuando EMPIEZA una Cortina → el GAS genera la siguiente tanda
-//   2. Cuando EMPIEZA cualquier tema → el GAS registra qué está sonando
-//
-// El GAS agrega la nueva tanda al final de BIBLIOTECA.
-// El polling de fetchBiblioteca() (cada 30s) la detecta y la suma a la cola.
-// El reproductor continúa sin interrupciones.
-// ══════════════════════════════════════════════════════════════════════════
 
-// Evita reportar el mismo tema dos veces seguidas
 var ultimoIDReportado = null;
 
-// Reporta al GAS qué tema está sonando ahora
-// Si es Cortina, el GAS dispara la generación de la siguiente tanda
-// Reporta al GAS qué tema está sonando ahora
-// Usa GET con parámetros para evitar el preflight CORS que bloquea POST
 function reportarAlAI(tema) {
   if (!DJ_AI_URL || DJ_AI_URL.startsWith('PEGAR')) return;
   if (!tema || !tema.ID) return;
@@ -1062,6 +1092,7 @@ function reportarAlAI(tema) {
       console.warn('[DJ AI] Error reportando reproducción:', err.message);
     });
 }
+
 // ── Arranque ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateClock();
@@ -1075,4 +1106,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.7 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
+console.log('El Manijero panel v1.9 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
