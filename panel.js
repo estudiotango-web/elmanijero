@@ -1088,4 +1088,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.7 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
+console.log('El Manijero panel v1.9 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
