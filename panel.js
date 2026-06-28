@@ -604,7 +604,11 @@ async function fetchBiblioteca() {
       var temaActual = biblioteca[indexActual] || null;
 var yaReprod   = biblioteca.slice(0, indexActual + 1);
 var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
-var colaNueva  = data.filter(function(t){ return !idsYa.has(t.ID); });
+var colaNueva = data.filter(function(t){
+  // Las cortinas nunca se filtran por ID — pueden repetirse
+  if (String(t.Genero || '').trim().toLowerCase() === 'cortina') return true;
+  return !idsYa.has(t.ID);
+});
 var longAntes  = biblioteca.length;
 biblioteca     = yaReprod.concat(colaNueva);
 if (temaActual) {
