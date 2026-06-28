@@ -839,35 +839,9 @@ function renderCola(temas) {
 }
 
 function renderProximaTanda(temas) {
+  // Sección eliminada — no se necesita
   var lista = document.getElementById('proxima-list');
-  if (!lista) return;
-
-  // Buscar temas DESPUÉS de la próxima cortina (= tanda siguiente real)
-  var despuesDeCortina = false;
-  var proximaTanda = [];
-  for (var i = 0; i < temas.length; i++) {
-    if (esCortina(temas[i])) {
-      despuesDeCortina = true;
-      continue;
-    }
-    if (despuesDeCortina) {
-      proximaTanda.push(temas[i]);
-      if (proximaTanda.length >= 2) break;
-    }
-  }
-
-  if (!proximaTanda.length) {
-    lista.innerHTML = '<div class="prox-item"><div class="prox-info"><div class="prox-track">Generando próxima tanda…</div></div></div>';
-    return;
-  }
-
-  var badges = ['Primer tema', 'Segundo tema'];
-  lista.innerHTML = proximaTanda.map(function(t, i) {
-    return '<div class="prox-item">' +
-      '<div class="prox-info"><div class="prox-track">' + (t.Titulo || '—') + ' · ' + (t.Orquesta || '—') + '</div>' +
-      '<div class="prox-orq">' + (t.Genero || '') + (t.Estilo ? ' · ' + t.Estilo : '') + ' · ' + (t.Anio || '') + '</div></div>' +
-      '<span class="prox-badge">' + (badges[i] || '') + '</span></div>';
-  }).join('');
+  if (lista) lista.innerHTML = '';
 }
 
 function actualizarBotones() {
