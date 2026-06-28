@@ -1,3 +1,4 @@
+
 /* El Manijero · panel.js v1.9
    Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
    Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
@@ -593,38 +594,24 @@ async function fetchBiblioteca() {
       actualizarBotones();
       iniciarPolling();
     } else {
-      var temaActual    = biblioteca[indexActual] || null;
-      // IDs ya reproducidos (estrictamente anteriores al actual)
-      var idsYaReprod   = new Set(biblioteca.slice(0, indexActual).map(function(t){ return t.ID; }));
-      // IDs que ya están en la cola actual (desde indexActual en adelante)
-      var idsColaActual = new Set(biblioteca.slice(indexActual).map(function(t){ return t.ID; }));
-
-      var temasNuevos = data.filter(function(t){
-        // Cortinas: no duplicar en cola, pero sí pueden volver si ya sonaron
-        if (esCortina(t)) return !idsColaActual.has(t.ID);
-        // Temas normales: no reproducidos y no ya en cola
-        return !idsYaReprod.has(t.ID) && !idsColaActual.has(t.ID);
+      // ── Lógica original que funcionaba, con excepción para cortinas ──
+      var temaActual = biblioteca[indexActual];
+      var yaReprod   = biblioteca.slice(0, indexActual + 1);
+      var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
+      var colaNueva  = data.filter(function(t){
+        // Cortinas con ID distinto al de yaReprod siempre pasan
+        // (el GAS ya garantiza que no repite la misma cortina consecutiva)
+        if (esCortina(t)) return !idsYa.has(t.ID);
+        return !idsYa.has(t.ID);
       });
-
-      var longAntes = biblioteca.length;
-      // Mantener cola actual + agregar nuevos al final
-      biblioteca = biblioteca.slice(indexActual + 1).concat(temasNuevos);
-
-      // Reapuntar indexActual al tema que está sonando
-      if (temaActual) {
-  biblioteca.unshift(temaActual);
-  indexActual = 0;
-} else {
-  indexActual = 0;
-}
-
+      var longAntes  = biblioteca.length;
+      biblioteca     = yaReprod.concat(colaNueva);
+      var nuevoIdx   = biblioteca.findIndex(function(t){ return t.ID === temaActual.ID; });
+      if (nuevoIdx !== -1 && nuevoIdx !== indexActual) indexActual = nuevoIdx;
       var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
         mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
-      }
-      if (estadoPanel === 'playing') {
-        renderCola(biblioteca.slice(indexActual + 1, indexActual + 6));
-        actualizarContadorTemas();
+        if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
       }
     }
   } catch(e) {
@@ -669,13 +656,11 @@ function stopMilonga() {
 
 // ── Posición dentro de la tanda actual ────────────────────────────────────
 function calcularPosEnTanda() {
-  // Contar hacia atrás desde indexActual hasta la última cortina
   var pos = 1;
   for (var i = indexActual - 1; i >= 0; i--) {
     if (esCortina(biblioteca[i])) break;
     pos++;
   }
-  // Contar temas de la tanda actual (hasta próxima cortina o fin)
   var total = pos;
   for (var j = indexActual + 1; j < biblioteca.length; j++) {
     if (esCortina(biblioteca[j])) break;
@@ -785,7 +770,6 @@ function renderTemaActual(tema, index) {
   setEl('badge-sub',   'Tanda · ' + (tema.Genero || ''));
   setEl('time-total',  esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '—'));
 
-  // Chip principal
   var html = '<span class="chip ch-' + (tema.Genero || '').toLowerCase() + '">' + (tema.Genero || '?') + '</span>';
   if (tema.Estilo && !esCortina(tema)) html += '<span class="chip ch-gold">' + tema.Estilo + '</span>';
   if (tema.BPM > 0) html += '<span class="chip ch-gold">' + tema.BPM + ' BPM</span>';
@@ -1079,4 +1063,4 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v1.9 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
+console.log('El Manijero panel v2.0 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
