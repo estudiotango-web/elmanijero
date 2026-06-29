@@ -1,8 +1,6 @@
-
-/* El Manijero · panel.js v1.9
-   Audio exclusivamente desde Cloudinary (.ogg / mp3 / etc.)
-   Columnas GAS: ID · Orquesta · Titulo · Genero · Estilo · Anio · AudioURL · Activo
-   Visualizaciones de audio · Gauges segmentados · Knob touch
+/* El Manijero · panel.js v2.0
+   FIX: SesionID único por noche — se captura al inicio y se envía en cada reporte
+   Audio exclusivamente desde Cloudinary (.ogg / mp3)
    ─────────────────────────────────────────────────────────────────────── */
 
 const GAS_URL        = 'https://script.google.com/macros/s/AKfycbxU2nDZQSw2mcQSW5YaioqOVvmaH8zLdLWdNbwUugUb-VHaptQV-VCuMJw-BliNu5B4/exec';
@@ -29,9 +27,31 @@ let pistaPollingTimer = null;
 let energiaHistory = [];
 const MAX_ENERGIA_HISTORY = 60;
 
+// ── FIX: SesionID único por noche ─────────────────────────────────────────
+let sesionActualID = null;
+
 // ── Audio nativo (Cloudinary) ──────────────────────────────────────────────
 let audioEl    = null;
 let audioGenId = 0;
+
+// ══════════════════════════════════════════════════════════════════════════
+// SESIÓN — capturar al inicio y mantener toda la noche
+// ══════════════════════════════════════════════════════════════════════════
+
+async function capturarSesionID() {
+  try {
+    var res  = await fetch(GAS_URL + '?action=getConfig');
+    var data = await res.json();
+    if (data && data.SesionActual) {
+      sesionActualID = data.SesionActual;
+      console.log('[Sesión] ID capturado:', sesionActualID);
+    } else {
+      console.log('[Sesión] Sin sesión activa en GAS — esperando iniciarNoche()');
+    }
+  } catch(e) {
+    console.warn('[Sesión] Error capturando sesionID:', e);
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // AUDIO — Cloudinary
@@ -59,7 +79,7 @@ function reproducirConAudioEl(tema) {
     if (audioGenId !== miGenId) return;
     el.play().catch(function(err) {
       if (audioGenId !== miGenId) return;
-      console.warn('Error al reproducir audio de Cloudinary:', err);
+      console.warn('Error al reproducir audio:', err);
       avanzarTema();
     });
     var pf = document.getElementById('progress-fill');
@@ -76,7 +96,7 @@ function reproducirConAudioEl(tema) {
 
   el.addEventListener('error', function() {
     if (audioGenId !== miGenId) return;
-    console.warn('Error cargando audio — saltando:', tema.Titulo, tema.AudioURL);
+    console.warn('Error cargando audio — saltando:', tema.Titulo);
     avanzarTema();
   });
 
@@ -119,7 +139,6 @@ function reproducirCortinaConFade(tema) {
     setEl('time-current', '0:00');
     setEl('time-total', '0:' + CORTINA_DURACION_SEG);
 
-    // Timer de progreso visual para la cortina
     var cortinaSegActual = 0;
     var cortinaProgTimer = setInterval(function() {
       if (audioGenId !== miGenId) { clearInterval(cortinaProgTimer); return; }
@@ -136,7 +155,6 @@ function reproducirCortinaConFade(tema) {
     startAudioSimulation();
     activarRing(true);
 
-    // ── Fade IN: 0 → volumen del knob en 2s ──────────────────────────
     var targetVol = knobValue / 100;
     var stepsIn   = FADE_IN_MS / STEP_MS;
     var stepVolIn = targetVol / stepsIn;
@@ -146,15 +164,12 @@ function reproducirCortinaConFade(tema) {
       if (el.volume >= targetVol) clearInterval(fadeInTimer);
     }, STEP_MS);
 
-    // ── Cortar a los 45s: fade OUT empieza a los 41s ─────────────────
     var fadeOutStartMs = (CORTINA_DURACION_SEG * 1000) - FADE_OUT_MS;
 
     cortinaTimer = setTimeout(function() {
       if (audioGenId !== miGenId) return;
-
       var stepsOut   = FADE_OUT_MS / STEP_MS;
       var stepVolOut = el.volume / stepsOut;
-
       var fadeOutTimer = setInterval(function() {
         if (audioGenId !== miGenId) { clearInterval(fadeOutTimer); return; }
         el.volume = Math.max(el.volume - stepVolOut, 0);
@@ -163,7 +178,6 @@ function reproducirCortinaConFade(tema) {
           if (audioGenId === miGenId) avanzarTema();
         }
       }, STEP_MS);
-
     }, fadeOutStartMs);
 
   }, { once: true });
@@ -182,10 +196,6 @@ function detenerAudio() {
     audioEl     = null;
   }
   audioGenId++;
-}
-
-function iniciarProgressAudio() {
-  if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -509,20 +519,6 @@ function updateAllGauges(energy, beat) {
   setEl('g-densidad-sub', dPct >= 60 ? 'Media'     : 'Poca');
   setEl('g-fatiga-sub',   fPct <= 35 ? 'Baja'      : 'Alta');
   setEl('g-conexion-sub', cPct >= 70 ? 'Muy buena' : 'Buena');
-
-  if (ePct >= 70) {
-    setEl('ia-texto',    'La energía de la pista está en ascenso. Buen momento para una tanda rítmica.');
-    setEl('rec-proxima', 'Próximo: D\'Arienzo 1937 · La Cumparsita');
-    setEl('ventana-val', '2 temas más');
-  } else if (ePct < 40) {
-    setEl('ia-texto',    'La pista está tranquila. Ideal para una tanda lírica o un vals.');
-    setEl('rec-proxima', 'Próximo: Di Sarli · Vals');
-    setEl('ventana-val', '1 tema más');
-  } else {
-    setEl('ia-texto',    'Energía moderada. Mantener el ritmo actual.');
-    setEl('rec-proxima', 'Próximo: Troilo · A media luz');
-    setEl('ventana-val', '3 temas más');
-  }
 }
 
 function drawEvolucionChart() {
@@ -593,15 +589,15 @@ async function fetchBiblioteca() {
       renderBibliotecaCargada();
       actualizarBotones();
       iniciarPolling();
+
+      // ── FIX: capturar sesionID después de cargar la biblioteca ──
+      await capturarSesionID();
+
     } else {
-      // ── Lógica original que funcionaba, con excepción para cortinas ──
       var temaActual = biblioteca[indexActual];
       var yaReprod   = biblioteca.slice(0, indexActual + 1);
       var idsYa      = new Set(yaReprod.map(function(t){ return t.ID; }));
       var colaNueva  = data.filter(function(t){
-        // Cortinas con ID distinto al de yaReprod siempre pasan
-        // (el GAS ya garantiza que no repite la misma cortina consecutiva)
-        if (esCortina(t)) return !idsYa.has(t.ID);
         return !idsYa.has(t.ID);
       });
       var longAntes  = biblioteca.length;
@@ -611,7 +607,10 @@ async function fetchBiblioteca() {
       var diff = biblioteca.length - longAntes;
       if (diff !== 0) {
         mostrarToast((diff > 0 ? '+' : '') + diff + ' tema' + (Math.abs(diff) > 1 ? 's' : '') + (diff > 0 ? ' agregado' : ' eliminado') + (Math.abs(diff) > 1 ? 's' : ''));
-        if (estadoPanel === 'playing') { renderCola(biblioteca.slice(indexActual + 1, indexActual + 6)); actualizarContadorTemas(); }
+        if (estadoPanel === 'playing') {
+          renderCola(biblioteca.slice(indexActual + 1, indexActual + 6));
+          actualizarContadorTemas();
+        }
       }
     }
   } catch(e) {
@@ -654,7 +653,6 @@ function stopMilonga() {
   setEl('ia-texto', 'Milonga detenida.'); renderCola([]);
 }
 
-// ── Posición dentro de la tanda actual ────────────────────────────────────
 function calcularPosEnTanda() {
   var pos = 1;
   for (var i = indexActual - 1; i >= 0; i--) {
@@ -669,7 +667,6 @@ function calcularPosEnTanda() {
   return { pos: pos, total: total };
 }
 
-// ── Reproducir tema ────────────────────────────────────────────────────────
 function reproducirTema(index) {
   if (index >= biblioteca.length) { finDeLaNoche(); return; }
 
@@ -704,12 +701,11 @@ function reproducirTema(index) {
   }
 }
 
-// ── avanzarTema ───────────────────────────────────────────────────────────
 function avanzarTema() {
   if (estadoPanel === 'stopped' || estadoPanel === 'idle') return;
   indexActual++;
   if (indexActual >= biblioteca.length) {
-    console.log('[DJ AI] Cola vacía — reintentando fetchBiblioteca cada 3s...');
+    console.log('[DJ AI] Cola vacía — esperando nueva tanda…');
     setEl('ia-texto', 'Preparando próxima tanda…');
     var esperarCola = setInterval(function() {
       if (estadoPanel === 'stopped' || estadoPanel === 'idle') {
@@ -728,7 +724,6 @@ function avanzarTema() {
   reproducirTema(indexActual);
 }
 
-// ── Detección de cortina ───────────────────────────────────────────────────
 function esCortina(t) {
   return String(t.Genero || '').trim().toLowerCase() === 'cortina';
 }
@@ -818,13 +813,6 @@ function renderCola(temas) {
       '<div class="q-orq">' + (esCortina(t) ? '0:45' : (t.Duracion || '—')) + ' · ' + (t.Estilo || '') + '</div></div>' +
       '<span class="chip ch-' + (t.Genero || '').toLowerCase() + '">' + (t.Genero || '') + '</span></div>';
   }).join('');
-  renderProximaTanda(temas);
-}
-
-function renderProximaTanda(temas) {
-  // Sección eliminada — no se necesita
-  var lista = document.getElementById('proxima-list');
-  if (lista) lista.innerHTML = '';
 }
 
 function actualizarBotones() {
@@ -853,26 +841,6 @@ function actualizarLiveBadge() {
     b.innerHTML = '<div class="live-dot" style="background:#c9a84c;animation:none"></div><span> En pausa</span>';
   else
     b.innerHTML = '<div class="live-dot" style="background:#555;animation:none"></div><span> Detenido</span>';
-}
-
-function iniciarProgress(tema) {
-  if (progressTimer) clearInterval(progressTimer);
-  var durStr   = esCortina(tema) ? '0:' + CORTINA_DURACION_SEG : (tema.Duracion || '0:00');
-  var partes   = durStr.split(':');
-  var totalSeg = (+partes[0]) * 60 + (+(partes[1] || 0));
-  var curSeg   = 0;
-  setEl('time-total', durStr);
-  progressTimer = setInterval(function() {
-    curSeg++;
-    var pct = Math.min((curSeg / totalSeg) * 100, 100);
-    var pf  = document.getElementById('progress-fill');
-    var tc  = document.getElementById('time-current');
-    if (pf) pf.style.width  = pct.toFixed(1) + '%';
-    if (tc) tc.textContent  = Math.floor(curSeg / 60) + ':' + (curSeg % 60).toString().padStart(2, '0');
-    var rest = totalSeg - curSeg;
-    setEl('m-tiempo', Math.floor(rest / 60) + ':' + (rest % 60).toString().padStart(2, '0'));
-    if (curSeg >= totalSeg) clearInterval(progressTimer);
-  }, 1000);
 }
 
 function resetProgressUI() {
@@ -943,6 +911,56 @@ function marcarAbandono(activo, pct) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// CONEXIÓN CON TANGO_DJ_AI — FIX PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════════
+
+var ultimoIDReportado = null;
+
+function reportarAlAI(tema) {
+  if (!DJ_AI_URL) return;
+  if (!tema || !tema.ID) return;
+  if (tema.ID === ultimoIDReportado) return;
+  ultimoIDReportado = tema.ID;
+
+  var params = new URLSearchParams({
+    action:          'reportarReproduccion',
+    sesionID:        sesionActualID || '',   // ── FIX: enviar sesionID capturado al inicio
+    ID:              tema.ID,
+    Titulo:          tema.Titulo     || '',
+    Orquesta:        tema.Orquesta   || '',
+    Genero:          tema.Genero     || '',
+    Estilo:          tema.Estilo     || '',
+    Anio:            tema.Anio       || '',
+    esCortina:       esCortina(tema) ? '1' : '0',
+    indexActual:     indexActual,
+    totalBiblioteca: biblioteca.length,
+    timestamp:       new Date().toISOString(),
+  });
+
+  fetch(DJ_AI_URL + '?' + params.toString())
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      // ── FIX: actualizar sesionID si el GAS lo confirma ──
+      if (data && data.sesionID && !sesionActualID) {
+        sesionActualID = data.sesionID;
+        console.log('[Sesión] ID confirmado por GAS:', sesionActualID);
+      }
+
+      if (data && data.proximaTanda) {
+        setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
+        setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
+      }
+      if (data && data.temasAgregados > 0) {
+        console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
+        setTimeout(fetchBiblioteca, 3000);
+      }
+    })
+    .catch(function(err) {
+      console.warn('[DJ AI] Error reportando reproducción:', err.message);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -972,8 +990,10 @@ function finDeLaNoche() {
   estadoPanel = 'stopped';
   detenerAudio();
   actualizarBotones(); actualizarLiveBadge(); stopAudioSimulation(); activarRing(false);
-  setEl('now-name', 'Fin de la milonga'); setEl('now-orq', 'Todos los temas reproducidos');
-  setEl('ia-texto', '¡La noche terminó! Hasta la próxima.'); renderCola([]);
+  setEl('now-name', 'Fin de la milonga');
+  setEl('now-orq',  'Todos los temas reproducidos');
+  setEl('ia-texto', '¡La noche terminó! Hasta la próxima.');
+  renderCola([]);
 }
 
 function updateClock() {
@@ -1007,49 +1027,6 @@ function handleResize() {
   if (ev) { ev.width = ev.offsetWidth || 300; drawEvolucionChart(); }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// CONEXIÓN CON TANGO_DJ_AI
-// ══════════════════════════════════════════════════════════════════════════
-
-var ultimoIDReportado = null;
-
-function reportarAlAI(tema) {
-  if (!DJ_AI_URL || DJ_AI_URL.startsWith('PEGAR')) return;
-  if (!tema || !tema.ID) return;
-  if (tema.ID === ultimoIDReportado) return;
-  ultimoIDReportado = tema.ID;
-
-  var params = new URLSearchParams({
-    action:          'reportarReproduccion',
-    ID:              tema.ID,
-    Titulo:          tema.Titulo     || '',
-    Orquesta:        tema.Orquesta   || '',
-    Genero:          tema.Genero     || '',
-    Estilo:          tema.Estilo     || '',
-    Anio:            tema.Anio       || '',
-    esCortina:       esCortina(tema) ? '1' : '0',
-    indexActual:     indexActual,
-    totalBiblioteca: biblioteca.length,
-    timestamp:       new Date().toISOString(),
-  });
-
-  fetch(DJ_AI_URL + '?' + params.toString())
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.proximaTanda) {
-        setEl('rec-proxima', 'Próxima tanda: ' + data.proximaTanda);
-        setEl('ia-texto', data.mensajeIA || 'IA analizando la pista…');
-      }
-      if (data && data.temasAgregados > 0) {
-        console.log('[DJ AI] Tanda generada: ' + data.temasAgregados + ' temas agregados');
-        setTimeout(fetchBiblioteca, 3000);
-      }
-    })
-    .catch(function(err) {
-      console.warn('[DJ AI] Error reportando reproducción:', err.message);
-    });
-}
-
 // ── Arranque ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateClock();
@@ -1057,10 +1034,10 @@ document.addEventListener('DOMContentLoaded', function() {
   initSliders();
   initKnob();
   actualizarBotones();
-  fetchBiblioteca();
+  fetchBiblioteca();      // captura sesionID adentro después de cargar
   iniciarPollingPista();
   window.addEventListener('resize', handleResize);
   setTimeout(handleResize, 100);
 });
 
-console.log('El Manijero panel v2.0 · conectado a TANGO_DJ_AI · generación tanda a tanda · ¡A bailar!');
+console.log('El Manijero panel v2.0 · FIX sesionID único · ¡A bailar!');
